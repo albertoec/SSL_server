@@ -1,8 +1,21 @@
 
+import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.Socket;
+import java.security.InvalidKeyException;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.Signature;
+import java.security.SignatureException;
+import java.security.UnrecoverableEntryException;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.net.ServerSocketFactory;
@@ -139,32 +152,139 @@ public class SSL_server {
         return null;
     }
 
-}
+    private static byte[] sign(String docPath, String keyStore, String entry_alias) throws KeyStoreException, IOException, NoSuchAlgorithmException, UnrecoverableEntryException, UnrecoverableEntryException, InvalidKeyException, SignatureException, CertificateException {
 
-class Hilo implements Runnable {
+        FileInputStream fmensaje = new FileInputStream(docPath);
 
-    private SSLSocket socket;
+        String provider = "SunJCE";
+        String algoritmo = "SHA1withRSA";
+        byte bloque[] = new byte[1024];
+        long filesize = 0;
+        int longbloque;
 
-    public Hilo() {
-        socket = null;
-    }
+        // Variables para el KeyStore
+        KeyStore ks;
+        char[] ks_password = keyStorePass.toCharArray();
+        char[] key_password = keyStorePass.toCharArray();
 
-    public Hilo(SSLSocket socket) {
-        this.socket = socket;
-    }
+         
 
-    @Override
-    public void run() {
+        System.out.println("******************************************* ");
+        System.out.println("*               FIRMA                     * ");
+        System.out.println("******************************************* ");
 
-        System.out.println("Nuevo cliente con dirección IP ->" + socket.getInetAddress().toString());
-        try {
-            socket.getInputStream().read(); // intrucción para forzar el inicio del handshake
-            socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
-        } catch (IOException ex) {
-            Logger.getLogger(Hilo.class.getName()).log(Level.SEVERE, null, ex);
+        // Obtener la clave privada del keystore
+        ks = KeyStore.getInstance("JCEKS");
+
+        ks.load(new FileInputStream(keyStore + ".jce"), ks_password);
+
+        KeyStore.PrivateKeyEntry pkEntry = (KeyStore.PrivateKeyEntry) ks.getEntry(entry_alias, new KeyStore.PasswordProtection(key_password));
+        System.err.println(pkEntry);
+        PrivateKey privateKey = pkEntry.getPrivateKey();
+
+        // Visualizar clave privada
+        System.out.println("*** CLAVE PRIVADA ***");
+        System.out.println("Algoritmo de Firma (sin el Hash): " + privateKey.getAlgorithm());
+        System.out.println(privateKey);
+
+        // Creamos un objeto para firmar/verificar
+        Signature signer = Signature.getInstance(algoritmo);
+
+        // Inicializamos el objeto para firmar
+        signer.initSign(privateKey);
+
+        // Para firmar primero pasamos el hash al mensaje (metodo "update")
+        // y despues firmamos el hash (metodo sign).
+        byte[] firma;
+
+        while ((longbloque = fmensaje.read(bloque)) > 0) {
+            filesize = filesize + longbloque;
+            signer.update(bloque, 0, longbloque);
         }
-       
+
+        firma = signer.sign();
+
+        double v = firma.length;
+
+        System.out.println("*** FIRMA: ****");
+        for (int i = 0; i < firma.length; i++) {
+            System.out.print(firma[i] + " ");
+        }
+        System.out.println();
+        System.out.println();
+
+        fmensaje.close();
+
+        return firma;
 
     }
 
+    private static boolean verify(String docPath, byte[] firma, String entry_alias) throws FileNotFoundException, CertificateException, InvalidKeyException, SignatureException, NoSuchAlgorithmException, IOException, KeyStoreException {
+
+        /**
+         * *****************************************************************
+         * Verificacion
+	 *****************************************************************
+         */
+        System.out.println("************************************* ");
+        System.out.println("        VERIFICACION                  ");
+        System.out.println("************************************* ");
+
+        FileInputStream fmensajeV = new FileInputStream(docPath);
+        byte bloque[] = new byte[1024];
+        long filesize = 0;
+        int longbloque;
+
+        KeyStore ks;
+        char[] ks_password = keyStorePass.toCharArray();
+
+        ks = KeyStore.getInstance("JCEKS");
+        ks.load(new FileInputStream(keyStore + ".jce"), ks_password);
+
+        // Obtener la clave publica del keystore
+        PublicKey publicKey = ks.getCertificate(entry_alias).getPublicKey();
+
+        System.out.println("*** CLAVE PUBLICA ***");
+        System.out.println(publicKey);
+
+        // Obtener el usuario del Certificado tomado del KeyStore.
+        //   Hay que traducir el formato de certificado del formato del keyStore
+        //	 al formato X.509. Para eso se usa un CertificateFactory.
+        byte[] certificadoRaw = ks.getCertificate(entry_alias).getEncoded();
+        ByteArrayInputStream inStream;
+        inStream = new ByteArrayInputStream(certificadoRaw);
+
+        CertificateFactory cf = CertificateFactory.getInstance("X.509");
+        X509Certificate cert = (X509Certificate) cf.generateCertificate(inStream);
+
+        // Creamos un objeto para verificar, pasandole el algoritmo leido del certificado.
+        Signature verifier = Signature.getInstance(cert.getSigAlgName());
+
+        // Inicializamos el objeto para verificar
+        verifier.initVerify(publicKey);
+
+        while ((longbloque = fmensajeV.read(bloque)) > 0) {
+            filesize = filesize + longbloque;
+            verifier.update(bloque, 0, longbloque);
+        }
+
+        boolean resultado;
+
+        resultado = verifier.verify(firma);
+
+        System.out.println();
+        if (resultado == true) {
+            System.out.print("Verificacion correcta de la Firma");
+            
+        } else {
+            System.out.print("Fallo de verificacion de firma");
+            return false;
+        }
+
+        fmensajeV.close();
+        return true;
+    }
 }
+
+
+
