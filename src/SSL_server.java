@@ -3,7 +3,6 @@ import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.Socket;
 import java.security.InvalidKeyException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -19,13 +18,11 @@ import java.security.cert.X509Certificate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.net.ServerSocketFactory;
-import javax.net.SocketFactory;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManagerFactory;
 
 
@@ -42,7 +39,7 @@ public class SSL_server {
 
     private static final String IP = "localhost";
     private static final int PORT = 8080;
-    private static final String RAIZ = "/home/expploitt/";
+    private static final String RAIZ = "";
     private static String keyStore, trustStore;
     private static String keyStorePass, trustStorePass;
     
