@@ -31,31 +31,30 @@ public class Hilo implements Runnable {
             socket.getRemoteSocketAddress(); // intrucción para forzar el inicio del handshake
             socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
 
-            SignedReader signedReader = new  SignedReader(socket);
+            SignedReader signedReader = new SignedReader(socket);
             SignedWriter signedWriter = new SignedWriter(socket);
-            
+
             int i = signedReader.read();
             System.out.println("Leyendo..." + i);
             i = whatOperation(i);
-            
+
             signedWriter.write(i);
             System.out.println("Escribiendo... " + " " + i);
             signedWriter.flush();
-            
+
             Object[] datos = signedReader.ReadSignedFile(new File("temporal.txt"));
-            
-            if(!SSL_server.verify((String) datos[3], (byte[]) datos[4], "kp_clientfirma_certificate")){
+
+            if (!SSL_server.verify((String) datos[3], (byte[]) datos[4], "kp_clientfirma_certificate")) {
                 signedWriter.writeString(SSL_server.FAIL_CERT);
-            }else if(!SSL_server.verifyCert( (byte[]) datos[5], "kp_clientfirma_certificate")){
+            } else if (!SSL_server.verifyCert((byte[]) datos[5], "kp_clientfirma_certificate")) {
                 signedWriter.writeString(SSL_server.FAIL_SIGN);
-            }else{
+            } else {
                 System.out.print("escribe");
                 signedWriter.writeString(SSL_server.OK);
-                signedWriter.flush();
             }
-            
+            signedWriter.flush();
             /*IMPLEMTAR LOS SELLOS TEMPORALES*/
-            
+
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -72,7 +71,7 @@ public class Hilo implements Runnable {
             default:
                 return SSL_server.NO_OPERATION;
         }
-        
+
         return 0;
     }
 }
