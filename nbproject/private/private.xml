@@ -3,6 +3,9 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
+            <file>file:/home/expploitt/NetBeansProjects/ProyectoSeguridad/SSL_server/src/Hilo.java</file>
+            <file>file:/home/expploitt/NetBeansProjects/ProyectoSeguridad/SSL_server/src/Utils/socket/SocketReader.java</file>
+            <file>file:/home/expploitt/NetBeansProjects/ProyectoSeguridad/SSL_server/src/Utils/socket/SignedReader.java</file>
             <file>file:/home/expploitt/NetBeansProjects/ProyectoSeguridad/SSL_server/src/SSL_server.java</file>
         </group>
     </open-files>

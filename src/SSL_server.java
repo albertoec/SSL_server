@@ -12,6 +12,7 @@ import java.security.PublicKey;
 import java.security.Signature;
 import java.security.SignatureException;
 import java.security.UnrecoverableEntryException;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -42,7 +43,16 @@ public class SSL_server {
     private static final String RAIZ = "";
     private static String keyStore, trustStore;
     private static String keyStorePass, trustStorePass;
+
+    public static final int NO_OPERATION = 0;
+    public static final int REGISTRAR = 1;
+    public static final int RECUPERAR = 2;
+    public static final int READY = 255;
     
+    public static final String FAIL_CERT = "CERTIFICADO INCORRECTO";
+    public static final String FAIL_SIGN = "FIRMA INCORRECTA";
+    public static final String OK = "OK";
+
     public static void main(String[] args) {
 
         if (args.length != 5) {
@@ -52,8 +62,8 @@ public class SSL_server {
         keyStore = args[0].trim();
         keyStorePass = args[1].trim();
         trustStore = args[2].trim();
-        trustStorePass= args[3].trim();
-        
+        trustStorePass = args[3].trim();
+
         try {
 
             new SSL_server().definirKeyStores();
@@ -77,31 +87,29 @@ public class SSL_server {
 
     public void definirKeyStores() {
 
-        String raiz = "/home/expploitt/";
-
-        System.setProperty("javax.net.debug", "all");
+        //System.setProperty("javax.net.debug", "all");
         // ----  Almacenes mios  -----------------------------
         // Almacen de claves
-        System.setProperty("javax.net.ssl.keyStore", raiz + "serverKeystore.jce");
+        System.setProperty("javax.net.ssl.keyStore", "serverKeystore.jce");
         System.setProperty("javax.net.ssl.keyStoreType", "JCEKS");
         System.setProperty("javax.net.ssl.keyStorePassword", "123456789");
 
         // Almacen de confianza
-        System.setProperty("javax.net.ssl.trustStore", raiz + "serverTruststore.jce");
+        System.setProperty("javax.net.ssl.trustStore", "serverTruststore.jce");
         System.setProperty("javax.net.ssl.trustStoreType", "JCEKS");
         System.setProperty("javax.net.ssl.trustStorePassword", "123456789");
 
     }
-    
+
     /**
      * ****************************************************
      * getServerSocketFactory(String type) {}
-    ****************************************************
+     * ***************************************************
      */
     private static ServerSocketFactory getServerSocketFactory(String type) {
 
         if (type.equals("TLS")) {
-            
+
             SSLServerSocketFactory ssf;
 
             try {
@@ -111,8 +119,7 @@ public class SSL_server {
                 KeyManagerFactory kmf;
                 TrustManagerFactory tmf;
                 KeyStore ks, ts;
-                
-                
+
                 char[] contraseñaKeyStore = keyStorePass.toCharArray();
                 char[] contraseñaTrustStore = trustStorePass.toCharArray();
 
@@ -122,19 +129,19 @@ public class SSL_server {
 
                 ks = KeyStore.getInstance("JCEKS");
                 ts = KeyStore.getInstance("JCEKS");
-                
-                ks.load(new FileInputStream(RAIZ + keyStore +  ".jce"), contraseñaKeyStore);
-                ts.load(new FileInputStream(RAIZ + trustStore +  ".jce"), contraseñaTrustStore);
-                
+
+                ks.load(new FileInputStream(RAIZ + keyStore + ".jce"), contraseñaKeyStore);
+                ts.load(new FileInputStream(RAIZ + trustStore + ".jce"), contraseñaTrustStore);
+
                 kmf.init(ks, contraseñaKeyStore);
                 tmf.init(ts);
 
                 ctx.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
 
                 ssf = ctx.getServerSocketFactory();
-                
+
                 return ssf;
-                
+
             } catch (Exception e) {
 
                 e.printStackTrace();
@@ -149,7 +156,7 @@ public class SSL_server {
         return null;
     }
 
-    private static byte[] sign(String docPath, String keyStore, String entry_alias) throws KeyStoreException, IOException, NoSuchAlgorithmException, UnrecoverableEntryException, UnrecoverableEntryException, InvalidKeyException, SignatureException, CertificateException {
+    public static byte[] sign(String docPath, String keyStore, String entry_alias) throws KeyStoreException, IOException, NoSuchAlgorithmException, UnrecoverableEntryException, UnrecoverableEntryException, InvalidKeyException, SignatureException, CertificateException {
 
         FileInputStream fmensaje = new FileInputStream(docPath);
 
@@ -163,8 +170,6 @@ public class SSL_server {
         KeyStore ks;
         char[] ks_password = keyStorePass.toCharArray();
         char[] key_password = keyStorePass.toCharArray();
-
-         
 
         System.out.println("******************************************* ");
         System.out.println("*               FIRMA                     * ");
@@ -216,12 +221,12 @@ public class SSL_server {
 
     }
 
-    private static boolean verify(String docPath, byte[] firma, String entry_alias) throws FileNotFoundException, CertificateException, InvalidKeyException, SignatureException, NoSuchAlgorithmException, IOException, KeyStoreException {
+    public static boolean verify(String docPath, byte[] firma, String entry_alias) throws FileNotFoundException, CertificateException, InvalidKeyException, SignatureException, NoSuchAlgorithmException, IOException, KeyStoreException {
 
         /**
          * *****************************************************************
          * Verificacion
-	 *****************************************************************
+         * ****************************************************************
          */
         System.out.println("************************************* ");
         System.out.println("        VERIFICACION                  ");
@@ -233,10 +238,10 @@ public class SSL_server {
         int longbloque;
 
         KeyStore ks;
-        char[] ks_password = keyStorePass.toCharArray();
+        char[] ks_password = trustStorePass.toCharArray();
 
         ks = KeyStore.getInstance("JCEKS");
-        ks.load(new FileInputStream(keyStore + ".jce"), ks_password);
+        ks.load(new FileInputStream(trustStore + ".jce"), ks_password);
 
         // Obtener la clave publica del keystore
         PublicKey publicKey = ks.getCertificate(entry_alias).getPublicKey();
@@ -256,7 +261,7 @@ public class SSL_server {
 
         // Creamos un objeto para verificar, pasandole el algoritmo leido del certificado.
         Signature verifier = Signature.getInstance(cert.getSigAlgName());
-
+        System.out.println(cert.getSigAlgName());
         // Inicializamos el objeto para verificar
         verifier.initVerify(publicKey);
 
@@ -272,7 +277,7 @@ public class SSL_server {
         System.out.println();
         if (resultado == true) {
             System.out.print("Verificacion correcta de la Firma");
-            
+
         } else {
             System.out.print("Fallo de verificacion de firma");
             return false;
@@ -281,7 +286,39 @@ public class SSL_server {
         fmensajeV.close();
         return true;
     }
+
+    public static boolean verifyCert(byte[] certificado, String entry_alias) throws Exception {
+
+        KeyStore ks;
+        ByteArrayInputStream inStream;
+        PublicKey publicKey;
+        char[] ks_password;
+
+        
+        ks_password = trustStorePass.toCharArray();
+        ks = KeyStore.getInstance("JCEKS");
+        ks.load(new FileInputStream(trustStore + ".jce"), ks_password);
+
+        // Obtener la clave publica del keystore
+        publicKey = ks.getCertificate(entry_alias).getPublicKey();
+        
+        //Obtener el certificado de un array de bytes
+        
+        inStream = new ByteArrayInputStream(certificado);
+        CertificateFactory cf = CertificateFactory.getInstance("X.509");
+        X509Certificate cert = (X509Certificate) cf.generateCertificate(inStream);
+        
+        try {
+
+            cert.verify(publicKey);
+
+        } catch (InvalidKeyException e) {
+            System.out.println("Certificado incorrecto");
+            return false;
+        }
+
+        System.out.println("Certificado correco");
+
+        return true;
+    }
 }
-
-
-
