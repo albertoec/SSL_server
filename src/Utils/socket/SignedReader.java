@@ -36,8 +36,8 @@ public class SignedReader extends SocketReader {
      * Read a signed file from the input stream.
      *
      * @param dest_file the file to save the file. Probably a temporary file
-     * @return Array of object[4]. 1st - Byte[] la firma 2nd - String
-     * identificador 3rd - Nombre del fichero 4th - X509Certificate certificado
+     * @return Array of object[5]. 1st - String identificador 2nd - String
+     * nombreDoc 3rd - Boolean Confidencialidad 4th String Archivo a guardar-5th byte[] firma  6th - X509Certificate certificado
      * @throws IOException if an I/O error occurs.
      * @throws NullPointerException if dest_file is null
      * @throws javax.security.cert.CertificateException If the certificate can

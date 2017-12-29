@@ -44,10 +44,7 @@ public class SSL_server {
     private static String keyStore, trustStore;
     private static String keyStorePass, trustStorePass;
 
-    public static final int NO_OPERATION = 0;
-    public static final int REGISTRAR = 1;
-    public static final int RECUPERAR = 2;
-    public static final int READY = 255;
+    
     
     public static final String FAIL_CERT = "CERTIFICADO INCORRECTO";
     public static final String FAIL_SIGN = "FIRMA INCORRECTA";
@@ -307,9 +304,16 @@ public class SSL_server {
         ks_password = trustStorePass.toCharArray();
         ks = KeyStore.getInstance("JCEKS");
         ks.load(new FileInputStream(trustStore + ".jce"), ks_password);
+
         
          //Obtener el certificado de un array de bytes
 
+
+        // Obtener la clave publica del keystore
+        publicKey = ks.getCertificate(entry_alias).getPublicKey();
+        
+        //Obtener el certificado de un array de bytes
+        
         inStream = new ByteArrayInputStream(certificado);
         CertificateFactory cf = CertificateFactory.getInstance("X.509");
         X509Certificate cert = (X509Certificate) cf.generateCertificate(inStream);
