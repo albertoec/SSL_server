@@ -15,6 +15,7 @@ import java.security.UnrecoverableEntryException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.Enumeration;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.net.ServerSocketFactory;
@@ -231,7 +232,7 @@ public class SSL_server {
         System.out.println("        VERIFICACION                  ");
         System.out.println("************************************* ");
 
-        FileInputStream fmensajeV = new FileInputStream(docPath);
+        
         byte bloque[] = new byte[1024];
         long filesize = 0;
         int longbloque;
@@ -241,9 +242,17 @@ public class SSL_server {
 
         ks = KeyStore.getInstance("JCEKS");
         ks.load(new FileInputStream(trustStore + ".jce"), ks_password);
+        
+        Enumeration<String> aliases = ks.aliases();
+        
+        while(aliases.hasMoreElements()){
+            
+        FileInputStream fmensajeV = new FileInputStream(docPath);
+            
+        String alias = aliases.nextElement();
 
         // Obtener la clave publica del keystore
-        PublicKey publicKey = ks.getCertificate(entry_alias).getPublicKey();
+        PublicKey publicKey = ks.getCertificate(alias).getPublicKey();
 
         System.out.println("*** CLAVE PUBLICA ***");
         System.out.println(publicKey);
@@ -251,7 +260,7 @@ public class SSL_server {
         // Obtener el usuario del Certificado tomado del KeyStore.
         //   Hay que traducir el formato de certificado del formato del keyStore
         //	 al formato X.509. Para eso se usa un CertificateFactory.
-        byte[] certificadoRaw = ks.getCertificate(entry_alias).getEncoded();
+        byte[] certificadoRaw = ks.getCertificate(alias).getEncoded();
         ByteArrayInputStream inStream;
         inStream = new ByteArrayInputStream(certificadoRaw);
 
@@ -276,14 +285,16 @@ public class SSL_server {
         System.out.println();
         if (resultado == true) {
             System.out.print("Verificacion correcta de la Firma");
+            
+            return true;
 
-        } else {
+        }
+        
+            fmensajeV.close();
+
+        }
             System.out.print("Fallo de verificacion de firma");
             return false;
-        }
-
-        fmensajeV.close();
-        return true;
     }
 
     public static boolean verifyCert(byte[] certificado, String entry_alias) throws Exception {
@@ -292,32 +303,45 @@ public class SSL_server {
         ByteArrayInputStream inStream;
         PublicKey publicKey;
         char[] ks_password;
-
         
         ks_password = trustStorePass.toCharArray();
         ks = KeyStore.getInstance("JCEKS");
         ks.load(new FileInputStream(trustStore + ".jce"), ks_password);
+        
+         //Obtener el certificado de un array de bytes
 
-        // Obtener la clave publica del keystore
-        publicKey = ks.getCertificate(entry_alias).getPublicKey();
-        
-        //Obtener el certificado de un array de bytes
-        
         inStream = new ByteArrayInputStream(certificado);
         CertificateFactory cf = CertificateFactory.getInstance("X.509");
         X509Certificate cert = (X509Certificate) cf.generateCertificate(inStream);
         
-        try {
+        
+        //Listamos los alias y después los recorremos en busca de un certificado que valga
+        
+        Enumeration<String> aliases = ks.aliases();
+ 
+            while(aliases.hasMoreElements()){
+                
+                // Obtener la clave publica del keystore
+                
+                publicKey = ks.getCertificate(aliases.nextElement()).getPublicKey();
 
-            cert.verify(publicKey);
+                try {
 
-        } catch (InvalidKeyException e) {
+                    cert.verify(publicKey);                    
+                    
+                    System.out.println("\nCertificado correcto");
+
+                    return true;
+                    
+                } catch (InvalidKeyException e) {
+
+                } catch (SignatureException ex) {
+                
+                }
+            } 
+             
+                               
             System.out.println("Certificado incorrecto");
             return false;
-        }
-
-        System.out.println("Certificado correco");
-
-        return true;
     }
 }

@@ -25,7 +25,7 @@ public class Hilo implements Runnable {
     public void run() {
 
         System.out.println("Nuevo cliente con dirección IP ->" + socket.getInetAddress().toString());
-
+ 
         try {
 
             socket.getRemoteSocketAddress(); // intrucción para forzar el inicio del handshake
