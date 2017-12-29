@@ -52,6 +52,7 @@ public class SSL_server {
 
     public static void main(String[] args) {
 
+        /*
         try {
             DBHandler handler = new DBHandler();
             handler.newEntry("ruta", "ombrecito", "sellito", null, null, true, "usuario");
@@ -59,6 +60,7 @@ public class SSL_server {
             ex.printStackTrace();
             System.exit(0);
         }
+        */
         if (args.length != 5) {
             System.out.println("Uso: SSL_server keyStoreFile contraseñaKeystore truststoreFile contraseñaTruststore algoritmoCifrado");
         }
