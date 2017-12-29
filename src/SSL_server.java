@@ -1,4 +1,6 @@
 
+import Utils.DB.DBException;
+import Utils.DB.DBHandler;
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -44,14 +46,19 @@ public class SSL_server {
     private static String keyStore, trustStore;
     private static String keyStorePass, trustStorePass;
 
-    
-    
     public static final String FAIL_CERT = "CERTIFICADO INCORRECTO";
     public static final String FAIL_SIGN = "FIRMA INCORRECTA";
     public static final String OK = "OK";
 
     public static void main(String[] args) {
 
+        try {
+            DBHandler handler = new DBHandler();
+            handler.newEntry("ruta", "ombrecito", "sellito", null, null, true, "usuario");
+        }catch(DBException ex){
+            ex.printStackTrace();
+            System.exit(0);
+        }
         if (args.length != 5) {
             System.out.println("Uso: SSL_server keyStoreFile contraseñaKeystore truststoreFile contraseñaTruststore algoritmoCifrado");
         }
@@ -229,7 +236,6 @@ public class SSL_server {
         System.out.println("        VERIFICACION                  ");
         System.out.println("************************************* ");
 
-        
         byte bloque[] = new byte[1024];
         long filesize = 0;
         int longbloque;
@@ -239,59 +245,59 @@ public class SSL_server {
 
         ks = KeyStore.getInstance("JCEKS");
         ks.load(new FileInputStream(trustStore + ".jce"), ks_password);
-        
+
         Enumeration<String> aliases = ks.aliases();
-        
-        while(aliases.hasMoreElements()){
-            
-        FileInputStream fmensajeV = new FileInputStream(docPath);
-            
-        String alias = aliases.nextElement();
 
-        // Obtener la clave publica del keystore
-        PublicKey publicKey = ks.getCertificate(alias).getPublicKey();
+        while (aliases.hasMoreElements()) {
 
-        System.out.println("*** CLAVE PUBLICA ***");
-        System.out.println(publicKey);
+            FileInputStream fmensajeV = new FileInputStream(docPath);
 
-        // Obtener el usuario del Certificado tomado del KeyStore.
-        //   Hay que traducir el formato de certificado del formato del keyStore
-        //	 al formato X.509. Para eso se usa un CertificateFactory.
-        byte[] certificadoRaw = ks.getCertificate(alias).getEncoded();
-        ByteArrayInputStream inStream;
-        inStream = new ByteArrayInputStream(certificadoRaw);
+            String alias = aliases.nextElement();
 
-        CertificateFactory cf = CertificateFactory.getInstance("X.509");
-        X509Certificate cert = (X509Certificate) cf.generateCertificate(inStream);
+            // Obtener la clave publica del keystore
+            PublicKey publicKey = ks.getCertificate(alias).getPublicKey();
 
-        // Creamos un objeto para verificar, pasandole el algoritmo leido del certificado.
-        Signature verifier = Signature.getInstance(cert.getSigAlgName());
-        System.out.println(cert.getSigAlgName());
-        // Inicializamos el objeto para verificar
-        verifier.initVerify(publicKey);
+            System.out.println("*** CLAVE PUBLICA ***");
+            System.out.println(publicKey);
 
-        while ((longbloque = fmensajeV.read(bloque)) > 0) {
-            filesize = filesize + longbloque;
-            verifier.update(bloque, 0, longbloque);
-        }
+            // Obtener el usuario del Certificado tomado del KeyStore.
+            //   Hay que traducir el formato de certificado del formato del keyStore
+            //	 al formato X.509. Para eso se usa un CertificateFactory.
+            byte[] certificadoRaw = ks.getCertificate(alias).getEncoded();
+            ByteArrayInputStream inStream;
+            inStream = new ByteArrayInputStream(certificadoRaw);
 
-        boolean resultado;
+            CertificateFactory cf = CertificateFactory.getInstance("X.509");
+            X509Certificate cert = (X509Certificate) cf.generateCertificate(inStream);
 
-        resultado = verifier.verify(firma);
+            // Creamos un objeto para verificar, pasandole el algoritmo leido del certificado.
+            Signature verifier = Signature.getInstance(cert.getSigAlgName());
+            System.out.println(cert.getSigAlgName());
+            // Inicializamos el objeto para verificar
+            verifier.initVerify(publicKey);
 
-        System.out.println();
-        if (resultado == true) {
-            System.out.print("Verificacion correcta de la Firma");
-            
-            return true;
+            while ((longbloque = fmensajeV.read(bloque)) > 0) {
+                filesize = filesize + longbloque;
+                verifier.update(bloque, 0, longbloque);
+            }
 
-        }
-        
+            boolean resultado;
+
+            resultado = verifier.verify(firma);
+
+            System.out.println();
+            if (resultado == true) {
+                System.out.print("Verificacion correcta de la Firma");
+
+                return true;
+
+            }
+
             fmensajeV.close();
 
         }
-            System.out.print("Fallo de verificacion de firma");
-            return false;
+        System.out.print("Fallo de verificacion de firma");
+        return false;
     }
 
     public static boolean verifyCert(byte[] certificado, String entry_alias) throws Exception {
@@ -300,52 +306,45 @@ public class SSL_server {
         ByteArrayInputStream inStream;
         PublicKey publicKey;
         char[] ks_password;
-        
+
         ks_password = trustStorePass.toCharArray();
         ks = KeyStore.getInstance("JCEKS");
         ks.load(new FileInputStream(trustStore + ".jce"), ks_password);
 
-        
-         //Obtener el certificado de un array de bytes
-
-
+        //Obtener el certificado de un array de bytes
         // Obtener la clave publica del keystore
         publicKey = ks.getCertificate(entry_alias).getPublicKey();
-        
+
         //Obtener el certificado de un array de bytes
-        
         inStream = new ByteArrayInputStream(certificado);
         CertificateFactory cf = CertificateFactory.getInstance("X.509");
         X509Certificate cert = (X509Certificate) cf.generateCertificate(inStream);
-        
-        
+
         //Listamos los alias y después los recorremos en busca de un certificado que valga
-        
         Enumeration<String> aliases = ks.aliases();
- 
-            while(aliases.hasMoreElements()){
-                
-                // Obtener la clave publica del keystore
-                
-                publicKey = ks.getCertificate(aliases.nextElement()).getPublicKey();
 
-                try {
+        while (aliases.hasMoreElements()) {
 
-                    cert.verify(publicKey);                    
-                    
-                    System.out.println("\nCertificado correcto");
+            // Obtener la clave publica del keystore
+            publicKey = ks.getCertificate(aliases.nextElement()).getPublicKey();
 
-                    return true;
-                    
-                } catch (InvalidKeyException e) {
+            try {
 
-                } catch (SignatureException ex) {
-                
-                }
-            } 
-             
-                               
-            System.out.println("Certificado incorrecto");
-            return false;
+                cert.verify(publicKey);
+                System.out.println("\nCertificado correcto");
+
+                return true;
+
+            } catch (InvalidKeyException e) {
+
+            } catch (SignatureException ex) {
+
+            } catch (Exception ex) {
+                //capturar el resto de excepciones posibles para que no se cuelgue el bucle por no haber capturado la excepcion 
+            }
+        }
+
+        System.out.println("Certificado incorrecto");
+        return false;
     }
 }
