@@ -1,4 +1,5 @@
 
+import Utils.DB.DBData;
 import Utils.DB.DBException;
 import Utils.DB.DBHandler;
 import java.io.ByteArrayInputStream;
@@ -51,16 +52,25 @@ public class SSL_server {
     public static final String OK = "OK";
 
     public static void main(String[] args) {
-
-        /*
+/*
         try {
             DBHandler handler = new DBHandler();
-            handler.newEntry("ruta", "ombrecito", "sellito", null, null, true, "usuario");
-        }catch(DBException ex){
+            byte[] f_c = new byte[2048];
+            for (int i = 0; i < 2048; i++) {
+                f_c[i] = 0x1;
+            }
+            handler.newEntry(37L, "ruta", "ombrecito", "sellito", f_c, f_c, false, "usuario");
+            DBData datos = handler.getData(37L);
+            if(datos!=null){
+                System.out.println(datos.getConfidencialidad());
+            }
+            handler.deleteEntry(36L);
+            System.exit(0);
+        } catch (DBException ex) {
             ex.printStackTrace();
             System.exit(0);
         }
-        */
+*/
         if (args.length != 5) {
             System.out.println("Uso: SSL_server keyStoreFile contraseñaKeystore truststoreFile contraseñaTruststore algoritmoCifrado");
         }
