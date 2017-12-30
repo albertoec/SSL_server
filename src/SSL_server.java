@@ -3,9 +3,14 @@ import Utils.DB.DBData;
 import Utils.DB.DBException;
 import Utils.DB.DBHandler;
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.security.InvalidKeyException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -182,22 +187,7 @@ public class SSL_server {
         return null;
     }
 
-    public static byte[] getSHA512(String docPath) throws FileNotFoundException, NoSuchAlgorithmException, IOException {
-        FileInputStream fmensaje = new FileInputStream(docPath);
-        MessageDigest md = null;
-        int longbloque;
-        byte bloque[] = new byte[1024];
-        long filesize = 0;
-        //SHA-512
-        md = MessageDigest.getInstance("SHA-512");
-        while ((longbloque = fmensaje.read(bloque)) > 0) {
-            filesize = filesize + longbloque;
-            md.update(bloque, 0, longbloque);
-        }
-        return md.digest();
-    }
-
-    public static byte[] sign(String docPath, int idRegistro, String sello, byte[] firmaCliente, String entry_alias) throws KeyStoreException, IOException, NoSuchAlgorithmException, UnrecoverableEntryException, UnrecoverableEntryException, InvalidKeyException, SignatureException, CertificateException {
+    public static byte[] sign(String docPath, Long idRegistro, String sello, byte[] firmaCliente, String entry_alias) throws KeyStoreException, IOException, NoSuchAlgorithmException, UnrecoverableEntryException, UnrecoverableEntryException, InvalidKeyException, SignatureException, CertificateException {
 
         FileInputStream fmensaje = new FileInputStream(docPath);
 
@@ -236,15 +226,22 @@ public class SSL_server {
         // Inicializamos el objeto para firmar
         signer.initSign(privateKey);
 
-        // Para firmar primero pasamos el hash al mensaje (metodo "update")
+        // Para firmar primero pasamos el hash a los datos (metodo "update")
         // y despues firmamos el hash (metodo sign).
         byte[] firma;
-
+        //primero el id del registro
+        ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+        buffer.putLong(idRegistro);
+        signer.update(buffer.array());
+        //segundo el sello temporal
+        signer.update(sello.getBytes());
+        //tercero el documento
         while ((longbloque = fmensaje.read(bloque)) > 0) {
             filesize = filesize + longbloque;
             signer.update(bloque, 0, longbloque);
         }
-
+        //y cuarto y último la firma del documento
+        signer.update(firmaCliente);
         firma = signer.sign();
 
         double v = firma.length;
@@ -380,5 +377,20 @@ public class SSL_server {
 
         System.out.println("Certificado incorrecto");
         return false;
+    }
+
+    public static String moveFile(long id_registro, String usuario, String temporal, boolean confidencialidad) throws IOException {
+        //se crea la carpeta donde se almacenaran los documentos si no existe
+        new File("documentos").mkdirs();
+        String destino = "documentos/" + id_registro + "_" + usuario + ".sig";
+
+        if (confidencialidad) {
+            destino += ".cif";
+            //cosas a hacer si es confidencial
+        } else {
+            //no es confidencia -> no se cifra, se almacena tal cual
+            Files.move(new File(temporal).toPath(), new File(destino).toPath(), StandardCopyOption.REPLACE_EXISTING);
+        }
+        return destino;
     }
 }
