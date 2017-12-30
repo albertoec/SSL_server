@@ -20,6 +20,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
+ * Handler de la base de datos del proyecto.
  *
  * @author eryalus
  */
@@ -31,7 +32,7 @@ public class DBHandler {
     /**
      * Crea el handler de la base de datos.
      *
-     * @throws DBException
+     * @throws DBException generada al no poder conectarse con la base de datos
      */
     public DBHandler() throws DBException {
         try {
@@ -44,12 +45,21 @@ public class DBHandler {
 
     }
 
+    /**
+     * Obtiene el siguiente ID a registrar
+     *
+     * @return el sigueinte id a registrar o -1L en caso de haber algún problema
+     */
     public Long getNextID() {
         long id = -1L;
         try {
             Statement st = getStat();
             ResultSet pub = st.executeQuery("SELECT id_registro FROM datos");
             long last = 0L;
+            /**
+             * recorremos todos los id_registro mirando si es mayor que el
+             * alamcenado y en caso de ser así se alamcena de forma temporal
+             */
             while (pub.next()) {
                 long temp = pub.getLong("id_registro");
                 if (temp > last) {
@@ -74,6 +84,11 @@ public class DBHandler {
         try {
             stat = conn.createStatement();
         } catch (SQLException ex) {
+            /**
+             * se vuelve a realizar el intento por la posible excepcion por
+             * timeout, que en caso de saltar al vovler a crear el statement no
+             * habría problema y se crearía correctamente
+             */
             stat = conn.createStatement();
         }
         return stat;
@@ -94,10 +109,12 @@ public class DBHandler {
 
         try {
             Statement st = getStat();
+            // Se cargan los no confidenciales
             ResultSet pub = st.executeQuery("SELECT id_registro FROM datos WHERE confidencialidad=false");
             while (pub.next()) {
                 publicos.add(getData(pub.getLong("id_registro")));
             }
+            // Se cargan los confidenciales asociados a ese usuario
             pub = st.executeQuery("SELECT id_registro FROM datos WHERE confidencialidad=true and usuario='" + usuario + "'");
             while (pub.next()) {
                 confidenciales.add(getData(pub.getLong("id_registro")));
