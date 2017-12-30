@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -79,7 +80,7 @@ public class SSL_server {
             ex.printStackTrace();
             System.exit(0);
         }
-        */
+         */
         if (args.length != 5) {
             System.out.println("Uso: SSL_server keyStoreFile contraseñaKeystore truststoreFile contraseñaTruststore algoritmoCifrado");
         }
@@ -179,6 +180,21 @@ public class SSL_server {
         }
 
         return null;
+    }
+
+    public static byte[] getSHA512(String docPath) throws FileNotFoundException, NoSuchAlgorithmException, IOException {
+        FileInputStream fmensaje = new FileInputStream(docPath);
+        MessageDigest md = null;
+        int longbloque;
+        byte bloque[] = new byte[1024];
+        long filesize = 0;
+        //SHA-512
+        md = MessageDigest.getInstance("SHA-512");
+        while ((longbloque = fmensaje.read(bloque)) > 0) {
+            filesize = filesize + longbloque;
+            md.update(bloque, 0, longbloque);
+        }
+        return md.digest();
     }
 
     public static byte[] sign(String docPath, int idRegistro, String sello, byte[] firmaCliente, String entry_alias) throws KeyStoreException, IOException, NoSuchAlgorithmException, UnrecoverableEntryException, UnrecoverableEntryException, InvalidKeyException, SignatureException, CertificateException {

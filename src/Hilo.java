@@ -2,6 +2,7 @@
 import Utils.socket.SignedReader;
 import Utils.socket.SignedWriter;
 import java.io.File;
+import java.security.MessageDigest;
 import java.util.Date;
 
 import javax.net.ssl.SSLSocket;
@@ -33,7 +34,7 @@ public class Hilo implements Runnable {
     public void run() {
 
         System.out.println("Nuevo cliente con dirección IP ->" + socket.getInetAddress().toString());
- 
+
         try {
 
             socket.getRemoteSocketAddress(); // intrucción para forzar el inicio del handshake
@@ -61,17 +62,18 @@ public class Hilo implements Runnable {
             System.out.println("Escribiendo... " + READY);
             signedWriter.flush();
 
-            Object[] datos = signedReader.ReadSignedFile(new File("temporal.txt"));
+            Object[] datos = signedReader.ReadSignedFile(new File(getRutaTemporal()));
 
             if (!SSL_server.verifyCert((byte[]) datos[5])) { //Validacion de certificado de documento.
                 signedWriter.writeString(SSL_server.FAIL_SIGN);
+                signedWriter.flush();
                 return;
             }
             if (!SSL_server.verify((String) datos[3], (byte[]) datos[4])) { //Validacion de firma de documento.
                 signedWriter.writeString(SSL_server.FAIL_CERT);
+                signedWriter.flush();
                 return;
-            } 
-             else {
+            } else {
                 System.out.print("\nescribe");
                 signedWriter.writeString(SSL_server.OK);
             }
@@ -82,10 +84,24 @@ public class Hilo implements Runnable {
             String sello = selloTemporal.toString();
             //Sello listo
             //firmar documento
-          // SSL_server.sign(datos[3],sello entry_alias);
-            
+            // SSL_server.sign(datos[3],sello entry_alias);
+
         } catch (Exception ex) {
             ex.printStackTrace();
         }
+    }
+
+    /**
+     * Obtiene una ruta temporal no utilizada
+     *
+     * @return Ruta temporal
+     */
+    private String getRutaTemporal() {
+        String temp = "temp";
+        long i = 0L;
+        while (new File(temp + i).exists()) {
+            i++;
+        }
+        return temp + i;
     }
 }
