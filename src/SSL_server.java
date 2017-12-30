@@ -1,7 +1,4 @@
 
-import Utils.DB.DBData;
-import Utils.DB.DBException;
-import Utils.DB.DBHandler;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -9,12 +6,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.security.InvalidKeyException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -24,9 +19,7 @@ import java.security.UnrecoverableEntryException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.net.ServerSocketFactory;
@@ -55,6 +48,10 @@ public class SSL_server {
     private static String keyStore, trustStore;
     private static String keyStorePass, trustStorePass;
 
+    public static final String ENTRY_AES = "aes_secret_key";
+    public static final String ENTRY_DES = "des_secret_key";
+    public static final String ENTRY_FIRMA = "firma_server";
+    public static final String ENTRY_CLAVE = "clave_server";
     public static final String FAIL_CERT = "CERTIFICADO INCORRECTO";
     public static final String FAIL_SIGN = "FIRMA INCORRECTA";
     public static final String OK = "OK";
@@ -85,7 +82,7 @@ public class SSL_server {
             ex.printStackTrace();
             System.exit(0);
         }
-         */
+        */
         if (args.length != 5) {
             System.out.println("Uso: SSL_server keyStoreFile contraseñaKeystore truststoreFile contraseñaTruststore algoritmoCifrado");
         }
@@ -121,14 +118,14 @@ public class SSL_server {
         //System.setProperty("javax.net.debug", "all");
         // ----  Almacenes mios  -----------------------------
         // Almacen de claves
-        System.setProperty("javax.net.ssl.keyStore", "serverKeystore.jce");
+        System.setProperty("javax.net.ssl.keyStore", keyStore + ".jce");
         System.setProperty("javax.net.ssl.keyStoreType", "JCEKS");
-        System.setProperty("javax.net.ssl.keyStorePassword", "123456789");
+        System.setProperty("javax.net.ssl.keyStorePassword", keyStorePass);
 
         // Almacen de confianza
-        System.setProperty("javax.net.ssl.trustStore", "serverTruststore.jce");
+        System.setProperty("javax.net.ssl.trustStore", trustStore + ".jce");
         System.setProperty("javax.net.ssl.trustStoreType", "JCEKS");
-        System.setProperty("javax.net.ssl.trustStorePassword", "123456789");
+        System.setProperty("javax.net.ssl.trustStorePassword", trustStorePass);
 
     }
 
