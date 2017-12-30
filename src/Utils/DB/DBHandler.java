@@ -14,6 +14,10 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -40,6 +44,25 @@ public class DBHandler {
 
     }
 
+    public Long getNextID() {
+        long id = -1L;
+        try {
+            Statement st = getStat();
+            ResultSet pub = st.executeQuery("SELECT id_registro FROM datos");
+            long last = 0L;
+            while (pub.next()) {
+                long temp = pub.getLong("id_registro");
+                if (temp > last) {
+                    last = temp;
+                }
+            }
+            id = last + 1;
+        } catch (SQLException ex) {
+            Logger.getLogger(DBHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return id;
+    }
+
     /**
      * Crea un statement para poder realizar acciones en la base de datos
      *
@@ -54,6 +77,38 @@ public class DBHandler {
             stat = conn.createStatement();
         }
         return stat;
+    }
+
+    /**
+     * Carga el listado de los documentos no confidenciales y los confidenciales
+     * correspondientes a ese usuario
+     *
+     * @param usuario Usuario del que se quiere el lisatdo
+     * @return HashMap con dos ArrayList uno con el key "confidencial" para los
+     * confidenciales y otro "noconfidencial" con los no confidenciales. null en
+     * caso de no poder obtener el listado.
+     */
+    public HashMap<String, ArrayList<DBData>> getListado(String usuario) {
+        HashMap<String, ArrayList<DBData>> datos = new HashMap<>();
+        ArrayList<DBData> publicos = new ArrayList<>(), confidenciales = new ArrayList<>();
+
+        try {
+            Statement st = getStat();
+            ResultSet pub = st.executeQuery("SELECT id_registro FROM datos WHERE confidencialidad=false");
+            while (pub.next()) {
+                publicos.add(getData(pub.getLong("id_registro")));
+            }
+            pub = st.executeQuery("SELECT id_registro FROM datos WHERE confidencialidad=true and usuario='" + usuario + "'");
+            while (pub.next()) {
+                confidenciales.add(getData(pub.getLong("id_registro")));
+            }
+            datos.put("noconfidenciales", publicos);
+            datos.put("confidenciales", confidenciales);
+            return datos;
+        } catch (SQLException ex) {
+            Logger.getLogger(DBHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
     }
 
     /**
@@ -188,4 +243,5 @@ public class DBHandler {
         }
         return conn;
     }
+
 }

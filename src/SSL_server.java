@@ -1,4 +1,7 @@
 
+import Utils.DB.DBData;
+import Utils.DB.DBException;
+import Utils.DB.DBHandler;
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -15,7 +18,9 @@ import java.security.UnrecoverableEntryException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.net.ServerSocketFactory;
@@ -49,7 +54,7 @@ public class SSL_server {
     public static final String OK = "OK";
 
     public static void main(String[] args) {
-/*
+        /*
         try {
             DBHandler handler = new DBHandler();
             byte[] f_c = new byte[2048];
@@ -57,17 +62,24 @@ public class SSL_server {
                 f_c[i] = 0x1;
             }
             handler.newEntry(37L, "ruta", "ombrecito", "sellito", f_c, f_c, false, "usuario");
+            
+            handler.newEntry(34L, "ruta2", "ombrecito", "sellito", f_c, f_c, true, "jeje");
+            handler.newEntry(32L, "ruta3", "ombrecito", "sellito", f_c, f_c, false, "usuario");
+            handler.newEntry(42L, "ruta4", "ombrecito", "sellito", f_c, f_c, false, "usuario");
             DBData datos = handler.getData(37L);
             if(datos!=null){
                 System.out.println(datos.getConfidencialidad());
             }
-            handler.deleteEntry(36L);
+            HashMap<String, ArrayList<DBData>> listado = handler.getListado("jeje");
+            System.out.println(listado.get("confidenciales").size());
+            System.out.println(handler.getNextID());
+            System.out.println(handler.getNextID());
             System.exit(0);
         } catch (DBException ex) {
             ex.printStackTrace();
             System.exit(0);
         }
-*/
+        */
         if (args.length != 5) {
             System.out.println("Uso: SSL_server keyStoreFile contraseñaKeystore truststoreFile contraseñaTruststore algoritmoCifrado");
         }
@@ -169,7 +181,7 @@ public class SSL_server {
         return null;
     }
 
-    public static byte[] sign(String docPath,int idRegistro,String sello, byte[] firmaCliente, String entry_alias) throws KeyStoreException, IOException, NoSuchAlgorithmException, UnrecoverableEntryException, UnrecoverableEntryException, InvalidKeyException, SignatureException, CertificateException {
+    public static byte[] sign(String docPath, int idRegistro, String sello, byte[] firmaCliente, String entry_alias) throws KeyStoreException, IOException, NoSuchAlgorithmException, UnrecoverableEntryException, UnrecoverableEntryException, InvalidKeyException, SignatureException, CertificateException {
 
         FileInputStream fmensaje = new FileInputStream(docPath);
 
@@ -256,7 +268,7 @@ public class SSL_server {
         ks.load(new FileInputStream(trustStore + ".jce"), ks_password);
 
         Enumeration<String> aliases = ks.aliases();
-        System.out.println((String)aliases.nextElement());
+        System.out.println((String) aliases.nextElement());
         while (aliases.hasMoreElements()) {
 
             FileInputStream fmensajeV = new FileInputStream(docPath);
@@ -291,7 +303,7 @@ public class SSL_server {
             }
 
             boolean resultado;
-            System.out.println((String)aliases.nextElement());
+            System.out.println((String) aliases.nextElement());
             resultado = verifier.verify(firma);
 
             System.out.println();
@@ -322,7 +334,6 @@ public class SSL_server {
 
         //Obtener el certificado de un array de bytes
         // Obtener la clave publica del keystore
-
         //Obtener el certificado de un array de bytes
         inStream = new ByteArrayInputStream(certificado);
         CertificateFactory cf = CertificateFactory.getInstance("X.509");
