@@ -169,7 +169,7 @@ public class SSL_server {
         return null;
     }
 
-    public static byte[] sign(String docPath, String keyStore, String entry_alias) throws KeyStoreException, IOException, NoSuchAlgorithmException, UnrecoverableEntryException, UnrecoverableEntryException, InvalidKeyException, SignatureException, CertificateException {
+    public static byte[] sign(String docPath,int idRegistro,String sello, byte[] firmaCliente, String entry_alias) throws KeyStoreException, IOException, NoSuchAlgorithmException, UnrecoverableEntryException, UnrecoverableEntryException, InvalidKeyException, SignatureException, CertificateException {
 
         FileInputStream fmensaje = new FileInputStream(docPath);
 
@@ -234,7 +234,7 @@ public class SSL_server {
 
     }
 
-    public static boolean verify(String docPath, byte[] firma, String entry_alias) throws FileNotFoundException, CertificateException, InvalidKeyException, SignatureException, NoSuchAlgorithmException, IOException, KeyStoreException {
+    public static boolean verify(String docPath, byte[] firma) throws FileNotFoundException, CertificateException, InvalidKeyException, SignatureException, NoSuchAlgorithmException, IOException, KeyStoreException {
 
         /**
          * *****************************************************************
@@ -256,7 +256,7 @@ public class SSL_server {
         ks.load(new FileInputStream(trustStore + ".jce"), ks_password);
 
         Enumeration<String> aliases = ks.aliases();
-
+        System.out.println((String)aliases.nextElement());
         while (aliases.hasMoreElements()) {
 
             FileInputStream fmensajeV = new FileInputStream(docPath);
@@ -291,7 +291,7 @@ public class SSL_server {
             }
 
             boolean resultado;
-
+            System.out.println((String)aliases.nextElement());
             resultado = verifier.verify(firma);
 
             System.out.println();
@@ -309,7 +309,7 @@ public class SSL_server {
         return false;
     }
 
-    public static boolean verifyCert(byte[] certificado, String entry_alias) throws Exception {
+    public static boolean verifyCert(byte[] certificado) throws Exception {
 
         KeyStore ks;
         ByteArrayInputStream inStream;
@@ -322,7 +322,6 @@ public class SSL_server {
 
         //Obtener el certificado de un array de bytes
         // Obtener la clave publica del keystore
-        publicKey = ks.getCertificate(entry_alias).getPublicKey();
 
         //Obtener el certificado de un array de bytes
         inStream = new ByteArrayInputStream(certificado);
@@ -331,7 +330,6 @@ public class SSL_server {
 
         //Listamos los alias y después los recorremos en busca de un certificado que valga
         Enumeration<String> aliases = ks.aliases();
-
         while (aliases.hasMoreElements()) {
 
             // Obtener la clave publica del keystore

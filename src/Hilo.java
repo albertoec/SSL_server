@@ -2,6 +2,8 @@
 import Utils.socket.SignedReader;
 import Utils.socket.SignedWriter;
 import java.io.File;
+import java.util.Date;
+
 import javax.net.ssl.SSLSocket;
 
 /*
@@ -61,17 +63,27 @@ public class Hilo implements Runnable {
 
             Object[] datos = signedReader.ReadSignedFile(new File("temporal.txt"));
 
-            if (!SSL_server.verify((String) datos[3], (byte[]) datos[4], "kp_clientfirma_certificate")) { //Archivo a guardar, firma y 
-                signedWriter.writeString(SSL_server.FAIL_CERT);
-            } else if (!SSL_server.verifyCert((byte[]) datos[5], "kp_clientfirma_certificate")) {
+            if (!SSL_server.verifyCert((byte[]) datos[5])) { //Validacion de certificado de documento.
                 signedWriter.writeString(SSL_server.FAIL_SIGN);
-            } else {
-                System.out.print("escribe");
+                return;
+            }
+            if (!SSL_server.verify((String) datos[3], (byte[]) datos[4])) { //Validacion de firma de documento.
+                signedWriter.writeString(SSL_server.FAIL_CERT);
+                return;
+            } 
+             else {
+                System.out.print("\nescribe");
                 signedWriter.writeString(SSL_server.OK);
             }
             signedWriter.flush();
-            /*IMPLEMTAR LOS SELLOS TEMPORALES*/
-
+            //NUMERO DE REGISTRO (idRegistro). FALTA IMPLEMENTAR.
+            //Sello temporal
+            Date selloTemporal = new Date();
+            String sello = selloTemporal.toString();
+            //Sello listo
+            //firmar documento
+          // SSL_server.sign(datos[3],sello entry_alias);
+            
         } catch (Exception ex) {
             ex.printStackTrace();
         }
