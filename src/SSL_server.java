@@ -22,6 +22,10 @@ import java.security.cert.X509Certificate;
 import java.util.Enumeration;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import javax.net.ServerSocketFactory;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -55,6 +59,8 @@ public class SSL_server {
     public static final String FAIL_CERT = "CERTIFICADO INCORRECTO";
     public static final String FAIL_SIGN = "FIRMA INCORRECTA";
     public static final String OK = "OK";
+    private static final String CONTRASEÑA = "seguridadproyect";
+    static Cipher cipher;
 
     public static void main(String[] args) {
         /*
@@ -98,6 +104,14 @@ public class SSL_server {
 
             SSLServerSocketFactory serverSocketFactory = (SSLServerSocketFactory) SSL_server.getServerSocketFactory("TLS");
             SSLServerSocket socket = (SSLServerSocket) serverSocketFactory.createServerSocket(PORT);
+            //INICIALIZANDO EL CIFRADOR.
+            
+        	String IV = "SEGURIDADPROYECT";
+            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding", "SunJCE");
+            SecretKeySpec key = new SecretKeySpec(CONTRASEÑA.getBytes("UTF-8"), "AES");
+            cipher.init(Cipher.DECRYPT_MODE, key,new IvParameterSpec(IV.getBytes("UTF-8")));
+            
+            //CIFRADOR INICIALIZADO
 
             System.out.println("*************************");
             System.out.println("* Servidor inicializado *");
@@ -110,7 +124,9 @@ public class SSL_server {
             }
         } catch (IOException ex) {
             Logger.getLogger(SSL_server.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        }catch (Exception e) {
+			e.printStackTrace();
+		}
     }
 
     public void definirKeyStores() {
@@ -390,4 +406,14 @@ public class SSL_server {
         }
         return destino;
     }
+    
+    public static byte[] encrypt(String plainText) throws Exception {
+        return cipher.doFinal(plainText.getBytes("UTF-8"));
+    }
+    
+    public static String decrypt(byte[] cipherText, String contraseña) throws Exception{
+        return new String(cipher.doFinal(cipherText),"UTF-8");
+    }
+    
+    
 }
