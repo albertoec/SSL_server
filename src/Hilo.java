@@ -93,7 +93,7 @@ public class Hilo implements Runnable {
 
             //firmar documento
             byte[] firma_server = null;
-            // firma_server = SSL_server.sign(datos[3],sello entry_alias); //en construccion
+            firma_server = SSL_server.sign(ruta_temp,id_registro,sello,firma_cliente,SSL_server.ENTRY_FIRMA); 
             /**
              * una vez todo hecho solo queda mover el fichero a su localización
              * final y se guardan los datos en la DB
