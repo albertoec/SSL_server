@@ -3,6 +3,7 @@ import Utils.DB.DBHandler;
 import Utils.socket.SignedReader;
 import Utils.socket.SignedWriter;
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Date;
 
@@ -94,6 +95,16 @@ public class Hilo implements Runnable {
             //firmar documento
             byte[] firma_server = null;
             firma_server = SSL_server.sign(ruta_temp,id_registro,sello,firma_cliente,SSL_server.ENTRY_FIRMA); 
+            //Fin FIRMA
+            //Hay que cifrar?
+            if(confidencialidad){
+            	System.out.println("***CIFRANDO***");
+            	String archivo = SSL_server.encrypt(ruta_temp);
+            	byte[] descifrado=SSL_server.decryptByte(archivo);
+            	String str = new String(descifrado, StandardCharsets.UTF_8);
+            	System.out.println(str);
+            	
+            }
             /**
              * una vez todo hecho solo queda mover el fichero a su localización
              * final y se guardan los datos en la DB

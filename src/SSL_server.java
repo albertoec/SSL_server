@@ -24,6 +24,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.net.ServerSocketFactory;
@@ -33,6 +34,7 @@ import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.TrustManagerFactory;
+import javax.xml.bind.DatatypeConverter;
 
 
 /*
@@ -60,7 +62,7 @@ public class SSL_server {
     public static final String FAIL_SIGN = "FIRMA INCORRECTA";
     public static final String OK = "OK";
     private static final String CONTRASEÑA = "seguridadproyect";
-    static Cipher cipher;
+   
 
     public static void main(String[] args) {
         /*
@@ -104,11 +106,20 @@ public class SSL_server {
 
             SSLServerSocketFactory serverSocketFactory = (SSLServerSocketFactory) SSL_server.getServerSocketFactory("TLS");
             SSLServerSocket socket = (SSLServerSocket) serverSocketFactory.createServerSocket(PORT);
+           
             //INICIALIZANDO EL CIFRADOR.
-            
+            char[] contraseñaKeyStore = keyStorePass.toCharArray();
+
         	String IV = "SEGURIDADPROYECT";
             Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding", "SunJCE");
-            SecretKeySpec key = new SecretKeySpec(CONTRASEÑA.getBytes("UTF-8"), "AES");
+            KeyStore ks;
+            ks = KeyStore.getInstance("JCEKS");
+            ks.load(new FileInputStream(RAIZ + keyStore + ".jce"), contraseñaKeyStore);
+            KeyStore.SecretKeyEntry pkEntry = (KeyStore.SecretKeyEntry) ks.getEntry("clavecifrado_server", new KeyStore.PasswordProtection(contraseñaKeyStore));
+            System.out.println(pkEntry);
+            SecretKey secretKey = pkEntry.getSecretKey();
+
+            SecretKeySpec key = new SecretKeySpec(secretKey.getEncoded(), "AES");
             cipher.init(Cipher.DECRYPT_MODE, key,new IvParameterSpec(IV.getBytes("UTF-8")));
             
             //CIFRADOR INICIALIZADO
@@ -406,13 +417,86 @@ public class SSL_server {
         }
         return destino;
     }
-    
-    public static byte[] encrypt(String plainText) throws Exception {
-        return cipher.doFinal(plainText.getBytes("UTF-8"));
+    /**
+     * Al metodo le pasas la ruta del archivo a cifrar.
+     * @return String del archivo cifrado.
+     */
+    public static String encrypt(String docPath) throws Exception {
+    	char[] contraseñaKeyStore = trustStorePass.toCharArray();
+    	String IV = "SEGURIDADPROYECT";
+        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding", "SunJCE");
+        KeyStore ks;
+        ks = KeyStore.getInstance("JCEKS");
+        ks.load(new FileInputStream(RAIZ + keyStore + ".jce"), contraseñaKeyStore);
+        KeyStore.SecretKeyEntry pkEntry = (KeyStore.SecretKeyEntry) ks.getEntry("clavecifrado_server", new KeyStore.PasswordProtection(contraseñaKeyStore));
+        System.out.println(pkEntry);
+        SecretKey secretKey = pkEntry.getSecretKey();
+        SecretKeySpec key = new SecretKeySpec(secretKey.getEncoded(), "AES");
+        cipher.init(Cipher.ENCRYPT_MODE, key,new IvParameterSpec(IV.getBytes("UTF-8")));
+        
+    	File inputFile = new File(docPath);
+    	FileInputStream fmensaje = new FileInputStream(docPath);
+    	System.out.println(inputFile.length());
+    	byte[] inputBytes = new byte[(int) inputFile.length()];
+    	fmensaje.read(inputBytes);
+        for (int i = 0; i < inputBytes.length; i++) {
+            System.out.print((char)inputBytes[i]);
+ }
+		byte[] cifrado = cipher.doFinal(inputBytes);
+		String encryptedValue = DatatypeConverter.printBase64Binary(cifrado);
+		fmensaje.close();
+    	return encryptedValue;
     }
-    
-    public static String decrypt(byte[] cipherText, String contraseña) throws Exception{
-        return new String(cipher.doFinal(cipherText),"UTF-8");
+    /**
+     * Al metodo le pasas la ruta del archivo a descifrar.
+     * @return String del archivo descifrado.
+     */
+    public static String decrypt(String docPath) throws Exception{
+    	char[] contraseñaKeyStore = trustStorePass.toCharArray();
+    	String IV = "SEGURIDADPROYECT";
+        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding", "SunJCE");
+        KeyStore ks;
+        ks = KeyStore.getInstance("JCEKS");
+        ks.load(new FileInputStream(RAIZ + keyStore + ".jce"), contraseñaKeyStore);
+        KeyStore.SecretKeyEntry pkEntry = (KeyStore.SecretKeyEntry) ks.getEntry("clavecifrado_server", new KeyStore.PasswordProtection(contraseñaKeyStore));
+        System.out.println(pkEntry);
+        SecretKey secretKey = pkEntry.getSecretKey();
+        SecretKeySpec key = new SecretKeySpec(secretKey.getEncoded(), "AES");
+        cipher.init(Cipher.DECRYPT_MODE, key,new IvParameterSpec(IV.getBytes("UTF-8")));
+        
+    	
+    	
+      	File inputFile = new File(docPath);
+    	FileInputStream fmensaje = new FileInputStream(docPath);
+    	byte[] inputBytes = new byte[(int) inputFile.length()];
+    	fmensaje.read(inputBytes);
+		byte[] cifrado = cipher.doFinal(inputBytes);
+		String encryptedValue = DatatypeConverter.printBase64Binary(cifrado);
+		fmensaje.close();
+    	return encryptedValue;
+    }
+    /**
+     * Al metodo le pasas el archivo en String a descifrar.
+     * @return byte[] del archivo descifrado.
+     */
+    public static byte[] decryptByte(String file) throws Exception{ 
+    	char[] contraseñaKeyStore = trustStorePass.toCharArray();
+    	String IV = "SEGURIDADPROYECT";
+        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding", "SunJCE");
+        KeyStore ks;
+        ks = KeyStore.getInstance("JCEKS");
+        ks.load(new FileInputStream(RAIZ + keyStore + ".jce"), contraseñaKeyStore);
+        KeyStore.SecretKeyEntry pkEntry = (KeyStore.SecretKeyEntry) ks.getEntry("clavecifrado_server", new KeyStore.PasswordProtection(contraseñaKeyStore));
+        System.out.println(pkEntry);
+        SecretKey secretKey = pkEntry.getSecretKey();
+        SecretKeySpec key = new SecretKeySpec(secretKey.getEncoded(), "AES");
+        cipher.init(Cipher.DECRYPT_MODE, key,new IvParameterSpec(IV.getBytes("UTF-8")));
+        
+    	
+        byte[] decordedValue = DatatypeConverter.parseBase64Binary(file);
+        byte[] cifrado = cipher.doFinal(decordedValue);
+		
+    	return cifrado;
     }
     
     
