@@ -19,6 +19,8 @@ import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.xml.bind.DatatypeConverter;
+
 /**
  * Handler de la base de datos del proyecto.
  *
@@ -142,33 +144,9 @@ public class DBHandler {
             DBData datos = new DBData();
             if (res.next()) {
                 //cargamos la firma del servidor
-                Blob blob = (Blob) res.getBlob("firma_server");
-                InputStream in = blob.getBinaryStream();
-                ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-
-                int nRead;
-                byte[] data = new byte[16384];
-
-                while ((nRead = in.read(data, 0, data.length)) != -1) {
-                    buffer.write(data, 0, nRead);
-                }
-
-                buffer.flush();
-                in.close();
-                datos.setFirma_servidor(buffer.toByteArray());
+            	datos.setFirma_servidor(DatatypeConverter.parseBase64Binary(res.getString("firma_server")));
                 //cargamos la firma del cliente
-                blob = (Blob) res.getBlob("firma_cliente");
-                in = blob.getBinaryStream();
-                buffer = new ByteArrayOutputStream();
-                data = new byte[16384];
-
-                while ((nRead = in.read(data, 0, data.length)) != -1) {
-                    buffer.write(data, 0, nRead);
-                }
-
-                buffer.flush();
-                in.close();
-                datos.setFirma_cliente(buffer.toByteArray());
+                datos.setFirma_cliente(DatatypeConverter.parseBase64Binary(res.getString("firma_cliente")));
                 //nombre del doc
                 datos.setNombre(res.getString("nombre_doc"));
                 //nombre de usuario
@@ -182,7 +160,8 @@ public class DBHandler {
                 return datos;
             }
 
-        } catch (SQLException | IOException ex) {
+        } catch (SQLException  ex) {
+        	ex.printStackTrace();
             return null;
         }
         return null;
@@ -220,7 +199,7 @@ public class DBHandler {
     public boolean newEntry(Long id_registro, String ruta, String nombre_doc, String sello, byte[] firma_cliente, byte[] firma_servidor, boolean confidencialidad, String usuario) {
         try {
             Statement st = getStat();
-            st.execute("INSERT INTO datos VALUES(" + id_registro + ",'" + ruta + "','" + nombre_doc + "','" + sello + "','" + new String(firma_cliente) + "','" + new String(firma_servidor) + "'," + confidencialidad + ",'" + usuario + "')");
+            st.execute("INSERT INTO datos VALUES(" + id_registro + ",'" + ruta + "','" + nombre_doc + "','" + sello + "','" + DatatypeConverter.printBase64Binary(firma_cliente) + "','" + DatatypeConverter.printBase64Binary(firma_servidor) + "'," + confidencialidad + ",'" + usuario + "')");
             return true;
         } catch (SQLException ex) {
             return false;
@@ -237,7 +216,7 @@ public class DBHandler {
         conn.createStatement().execute("CREATE DATABASE IF NOT EXISTS " + NOMBRE_DB);
         conn.close();
         conn = MySQLConnection(USER, PASSWD, PORT, NOMBRE_DB);
-        conn.createStatement().execute("CREATE TABLE IF NOT EXISTS datos(id_registro BIGINT NOT NULL,ruta_doc varchar(1000),nombre_doc varchar(100),sello varchar(1000),firma_cliente VARBINARY(2048),firma_server VARBINARY(2048),confidencialidad boolean,usuario varchar(1000),PRIMARY KEY (id_registro))");
+        conn.createStatement().execute("CREATE TABLE IF NOT EXISTS datos(id_registro BIGINT NOT NULL,ruta_doc varchar(1000),nombre_doc varchar(100),sello varchar(1000),firma_cliente varchar(2048),firma_server varchar(2048),confidencialidad boolean,usuario varchar(1000),PRIMARY KEY (id_registro))");
     }
 
     /**
