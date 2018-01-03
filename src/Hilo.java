@@ -2,10 +2,16 @@
 import Utils.DB.DBHandler;
 import Utils.socket.SignedReader;
 import Utils.socket.SignedWriter;
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.util.Date;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.net.ssl.SSLSocket;
 
@@ -50,6 +56,9 @@ public class Hilo implements Runnable {
             if (i == REGISTRAR) {
                 registrar_documento();
 
+            }
+            if(i == RECUPERAR){
+                recuperar_documento();
             }
 
         } catch (Exception ex) {
@@ -114,6 +123,43 @@ public class Hilo implements Runnable {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
+    }
+    
+    private void recuperar_documento() throws Exception{
+        
+        try {
+            signedWriter.write(READY);    
+            System.out.println("Escribiendo... " + READY);
+            signedWriter.flush();
+            
+            Object[] recibido = signedReader.ReadRecoveryRequest();
+            String id_registro = (String) recibido[0];
+            System.out.println("El numero de registro del documento solicitado es " + id_registro); 
+            
+            byte[] certificado = (byte[]) recibido[1];
+            
+            if (!SSL_server.verifyCert(certificado)) { //Validacion de certificado de documento.
+                signedWriter.writeString(SSL_server.FAIL_SIGN);
+                signedWriter.flush();
+                return;
+            } else {
+                System.out.print("\nescribe");
+                signedWriter.writeString(SSL_server.OK);
+            }
+            signedWriter.flush();
+            
+            ByteArrayInputStream inStream = new ByteArrayInputStream(certificado);
+            CertificateFactory cf = CertificateFactory.getInstance("X.509");
+            X509Certificate cert = (X509Certificate) cf.generateCertificate(inStream);
+            
+            String idCliente = cert.getIssuerDN().toString();
+            System.out.println("\n" +idCliente);
+            
+            
+        } catch (IOException ex) {
+            Logger.getLogger(Hilo.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    
     }
 
     /**

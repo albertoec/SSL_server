@@ -5,6 +5,7 @@
         <group>
             <file>file:/home/brais/NetBeansProjects/ssl_server/src/Hilo.java</file>
             <file>file:/home/brais/NetBeansProjects/ssl_server/src/SSL_server.java</file>
+            <file>file:/home/brais/NetBeansProjects/ssl_server/src/Utils/socket/SignedReader.java</file>
         </group>
     </open-files>
 </project-private>

@@ -106,4 +106,26 @@ public class SignedReader extends SocketReader {
         
         return to_return;
     }
+    
+    public Object[] ReadRecoveryRequest() throws IOException{
+        
+        Object[] to_return = new Object[2];
+        
+        //Primero leemos el id del documento que se nos pide recuperar
+        String id = readString();
+        
+        //Leemos el certificado
+        
+        long longitud = readLong();
+        
+        byte[] cert = new byte[(int) longitud];
+        
+        read(cert);
+        
+        to_return[0] = id;
+        to_return[1] = cert;
+        
+        return to_return;
+        
+    }
 }
