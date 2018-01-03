@@ -40,6 +40,7 @@ public class DBHandler {
         try {
             crearBaseDatos();
         } catch (SQLException | ClassNotFoundException | InstantiationException | IllegalAccessException ex) {
+            ex.printStackTrace();
             DBException except = new DBException("No se ha podido crear la base de datos.");
             except.setStackTrace(ex.getStackTrace());
             throw except;
