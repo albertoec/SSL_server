@@ -297,6 +297,7 @@ public class SSL_server {
 
 		Enumeration<String> aliases = ks.aliases();
 		System.out.println((String) aliases.nextElement());
+                
 		while (aliases.hasMoreElements()) {
 
 			FileInputStream fmensajeV = new FileInputStream(docPath);
