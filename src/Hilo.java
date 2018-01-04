@@ -191,7 +191,7 @@ public class Hilo implements Runnable {
                 X509Certificate cert_firma_servidor = SSL_server.getCertificate(SSL_server.getKeyStore(), SSL_server.getKeyStorePass(), SSL_server.ENTRY_FIRMA);
 
                 //Enviamos la respuesta
-                boolean respuesta = signedWriter.sendRecoveryResponse(id_registro, ruta, sello, firma_registrador, cert_firma_servidor);
+                boolean respuesta = signedWriter.sendRecoveryResponse(id_registro, ruta, sello, firma_registrador, cert_firma_servidor, datos.getNombre());
 
                 if (respuesta) {
                     System.out.println("Se ha enviado la respuesta correctamente");
@@ -248,7 +248,7 @@ public class Hilo implements Runnable {
                 X509Certificate cert_firma_servidor = SSL_server.getCertificate(SSL_server.getKeyStore(), SSL_server.getKeyStorePass(), "servidor".concat("-firma-rsa"));
 
                 //Enviamos la respuesta
-                boolean flag = signedWriter.sendRecoveryResponse(id_registro, temporal, sello, firma_registrador, cert_firma_servidor);
+                boolean flag = signedWriter.sendRecoveryResponse(id_registro, temporal, sello, firma_registrador, cert_firma_servidor,datos.getNombre());
 
                 if (flag) {
                     System.out.println("Se ha enviado la respuesta correctamente");

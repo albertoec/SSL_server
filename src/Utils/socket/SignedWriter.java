@@ -102,21 +102,23 @@ public class SignedWriter extends SocketWriter {
         }
 
     }
-    
-    public boolean sendRecoveryResponse(String id_registro, String ruta, String sello, byte[] firma_registrador, X509Certificate cert_firma_server){
-        
+
+    public boolean sendRecoveryResponse(String id_registro, String ruta, String sello, byte[] firma_registrador, X509Certificate cert_firma_server, String docName) {
+
         try {
             //Escribimos una respuesta del tipo Registrar_documento.Response(0,idRegistro, sello Temporal, documento, SigRD, CertFirmaS)
 
             writeLong(0);
             flush();
-            
+
             writeString(id_registro);
             flush();
-            
+
             writeString(sello);
             flush();
-            
+
+            writeString(docName);
+
             File file = new File(ruta);
             InputStream in = new FileInputStream(file);
             long longitud = file.length();
@@ -128,27 +130,25 @@ public class SignedWriter extends SocketWriter {
                 write(Arrays.copyOfRange(bytes, 0, leidos));
             }
             flush();
-            
+
             writeLong(firma_registrador.length);
             write(firma_registrador);
             flush();
-            
+
             byte[] cert = cert_firma_server.getEncoded();
             writeLong(cert.length);
             write(cert);
             flush();
-            
-            return true; 
-            
+
+            return true;
+
         } catch (IOException ex) {
             return false;
         } catch (CertificateEncodingException ex) {
             return false;
         }
-           
-        }
-        
-    
+
+    }
 
     public boolean sendDocumentListRequest(ArrayList<DBData> lista) {
 
@@ -156,10 +156,9 @@ public class SignedWriter extends SocketWriter {
 
             /*enviamos el tamaño del arraylist para que en caso de tamaño 0,
             no tengamos que quedarnos escuchando en el lado del cliente*/
-            
             write(lista.size());
             flush();
-            
+
             for (int i = 0; i < lista.size(); i++) {
 
                 /*idRegistro*/
