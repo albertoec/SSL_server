@@ -194,12 +194,12 @@ public class Hilo implements Runnable {
                 String ruta = datos.getRuta();
                 byte[] firma_registrador = datos.getFirma_servidor();
                 byte[] firma_cliente = datos.getFirma_cliente();
-                X509Certificate cert_firma_servidor = SSL_server.getCertificate(SSL_server.getKeyStore(), SSL_server.getKeyStorePass(), "firma_server");
+                X509Certificate cert_firma_servidor = SSL_server.getCertificate(SSL_server.getKeyStore(), SSL_server.getKeyStorePass(), "servidor-firma-rsa");
 
                 //Enviamos la respuesta
-                boolean flag = signedWriter.sendRecoveryResponse(id_registro, ruta, sello, firma_registrador, cert_firma_servidor);
+                boolean respuesta = signedWriter.sendRecoveryResponse(id_registro, ruta, sello, firma_registrador, cert_firma_servidor);
 
-                if (!flag) {
+                if (respuesta) {
                     System.out.println("Se ha enviado la respuesta correctamente");
                 } else {
                     System.out.println("Error al enviar la respuesta");
