@@ -5,12 +5,10 @@
         <group>
             <file>file:/home/expploitt/NetBeansProjects/ProyectoSeguridad/SSL_server/src/Hilo.java</file>
             <file>file:/home/expploitt/NetBeansProjects/ProyectoSeguridad/SSL_server/src/Utils/socket/SocketReader.java</file>
-            <file>file:/home/expploitt/NetBeansProjects/ProyectoSeguridad/SSL_server/src/Utils/socket/SignedReader.java</file>
             <file>file:/home/expploitt/NetBeansProjects/ProyectoSeguridad/SSL_server/src/SSL_server.java</file>
-            <file>file:/home/expploitt/NetBeansProjects/ProyectoSeguridad/SSL_server/src/Utils/DB/DBData.java</file>
             <file>file:/home/expploitt/NetBeansProjects/ProyectoSeguridad/SSL_server/src/Utils/cipher/cifrador.java</file>
             <file>file:/home/expploitt/NetBeansProjects/ProyectoSeguridad/SSL_server/src/Utils/socket/SignedWriter.java</file>
-            <file>file:/home/expploitt/NetBeansProjects/ProyectoSeguridad/SSL_server/src/Utils/DB/DBException.java</file>
+            <file>file:/home/expploitt/NetBeansProjects/ProyectoSeguridad/SSL_server/src/Utils/DB/DBHandler.java</file>
         </group>
     </open-files>
 </project-private>
