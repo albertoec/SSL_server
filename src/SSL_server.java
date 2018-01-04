@@ -50,6 +50,7 @@ import Utils.DB.DBData;
 import Utils.DB.DBException;
 import Utils.DB.DBHandler;
 import Utils.cipher.cifrador;
+import java.security.UnrecoverableKeyException;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -450,5 +451,46 @@ public class SSL_server {
 
 		return cifrado;
 	}
+        
+        public static X509Certificate getCertificate(String keyStore, String keyStorePwd, String aliasCertificate) throws FileNotFoundException, KeyStoreException, IOException, NoSuchAlgorithmException, UnrecoverableKeyException, CertificateException {
 
+        KeyStore keystore = KeyStore.getInstance("JCEKS");
+        keystore.load(new FileInputStream(keyStore + ".jce"), keyStorePwd.toCharArray());
+        X509Certificate cert;
+
+        cert = (X509Certificate) keystore.getCertificate(aliasCertificate);
+
+        return cert;
+        
+        }
+        
+        
+    /**
+     * @return the keyStore
+     */
+    public static String getKeyStore() {
+        return keyStore;
+    }
+
+    /**
+     * @return the trustStore
+     */
+    public static String getTrustStore() {
+        return trustStore;
+    }
+
+    /**
+     * @return the keyStorePass
+     */
+    public static String getKeyStorePass() {
+        return keyStorePass;
+    }
+
+    /**
+     * @return the trustStorePass
+     */
+    public static String getTrustStorePass() {
+        return trustStorePass;
+    }
+        
 }

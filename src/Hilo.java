@@ -163,32 +163,104 @@ public class Hilo implements Runnable {
 
     private void recuperar_documento() throws Exception {
 
-        signedWriter.write(READY);
-        System.out.println("Escribiendo... " + READY);
-        signedWriter.flush();
-
-        Object[] recibido = signedReader.ReadRecoveryRequest();
-        String id_registro = (String) recibido[0];
-        System.out.println("El numero de registro del documento solicitado es " + id_registro);
-
-        byte[] certificado = (byte[]) recibido[1];
-
-        if (!SSL_server.verifyCert(certificado)) { //Validacion de certificado de documento.
-            signedWriter.writeString(SSL_server.FAIL_SIGN);
+        try {
+            signedWriter.write(READY);
+            System.out.println("Escribiendo... " + READY);
             signedWriter.flush();
-            return;
-        } else {
-            System.out.print("\nescribe");
-            signedWriter.writeString(SSL_server.OK);
+
+            Object[] recibido = signedReader.ReadRecoveryRequest();
+            String id_registro = (String) recibido[0];
+            System.out.println("El numero de registro del documento solicitado es " + id_registro);
+
+            //Compruebo si tenemos el id_registro en nuestra base de datos, de no ser así no existe el documento
+            if (SSL_server.HANDLER.getData((long) Integer.parseInt(id_registro)) == null) {
+                signedWriter.writeString("DOCUMENTO NO EXISTENTE");
+                signedWriter.flush();
+                return;
+            } else {
+                signedWriter.writeString("EXISTE DOCUMENTO");
+                signedWriter.flush();
+            }
+
+            //Tenemos un id_registro en nuestra base de datos que se corresponde al que nos solicitan
+            DBData datos = SSL_server.HANDLER.getData((long) Integer.parseInt(id_registro));
+
+            if (!datos.getConfidencialidad()) { //Si el documento es publico
+                //Le enviamos al cliente la confidencialidad del documento
+                signedWriter.writeString("PUBLICO");
+                signedWriter.flush();
+
+                String sello = datos.getSello();
+                String ruta = datos.getRuta();
+                byte[] firma_registrador = datos.getFirma_servidor();
+                byte[] firma_cliente = datos.getFirma_cliente();
+                X509Certificate cert_firma_servidor = SSL_server.getCertificate(SSL_server.getKeyStore(), SSL_server.getKeyStorePass(), "firma_server");
+
+                //Enviamos la respuesta
+                boolean flag = signedWriter.sendRecoveryResponse(id_registro, ruta, sello, firma_registrador, cert_firma_servidor);
+
+                if (!flag) {
+                    System.out.println("Se ha enviado la respuesta correctamente");
+                } else {
+                    System.out.println("Error al enviar la respuesta");
+                }
+            } else { //El documento es privado
+                
+                signedWriter.writeString("PRIVADO");
+                signedWriter.flush();
+
+                byte[] certificado = (byte[]) recibido[1];
+
+                if (!SSL_server.verifyCert(certificado)) { //Validacion del certificado del cliente
+                    signedWriter.writeString(SSL_server.FAIL_SIGN);
+                    signedWriter.flush();
+                    return;
+                } else {
+                    signedWriter.writeString(SSL_server.OK);
+                }
+                signedWriter.flush();
+
+                ByteArrayInputStream inStream = new ByteArrayInputStream(certificado);
+                CertificateFactory cf = CertificateFactory.getInstance("X.509");
+                X509Certificate cert = (X509Certificate) cf.generateCertificate(inStream);
+
+                String idCliente = cert.getIssuerDN().toString();
+                String[] fragmentos = idCliente.split(",");
+                
+                idCliente = fragmentos[1].trim().replace("OU=", "");
+                
+                if(!idCliente.equals(datos.getUsuario())){ 
+                    signedWriter.writeString("ACCESO NO PERMITIDO");
+                    signedWriter.flush();
+                    return;
+                }else{
+                    signedWriter.writeString("USUARIO CORRECTO");
+                    signedWriter.flush();
+                }
+                
+                String temporal = getRutaTemporal();
+                
+                SSL_server.Cifrador.decrypt(datos.getRuta(), temporal);
+                
+                String sello = datos.getSello();
+                byte[] firma_registrador = datos.getFirma_servidor();
+                byte[] firma_cliente = datos.getFirma_cliente();
+                X509Certificate cert_firma_servidor = SSL_server.getCertificate(SSL_server.getKeyStore(), SSL_server.getKeyStorePass(), "firma_server");
+                
+                
+                //Enviamos la respuesta
+                boolean flag = signedWriter.sendRecoveryResponse(id_registro, temporal, sello, firma_registrador, cert_firma_servidor);
+
+                if (flag) {
+                    System.out.println("Se ha enviado la respuesta correctamente");
+                } else {
+                    System.out.println("Error al enviar la respuesta");
+                }
+
+            }
+        } catch (IOException ex) {
+            Logger.getLogger(Hilo.class.getName()).log(Level.SEVERE, null, ex);
         }
-        signedWriter.flush();
-
-        ByteArrayInputStream inStream = new ByteArrayInputStream(certificado);
-        CertificateFactory cf = CertificateFactory.getInstance("X.509");
-        X509Certificate cert = (X509Certificate) cf.generateCertificate(inStream);
-
-        String idCliente = cert.getIssuerDN().toString();
-        System.out.println("\n" + idCliente);
 
     }
 
