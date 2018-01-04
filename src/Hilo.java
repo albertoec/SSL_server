@@ -4,6 +4,8 @@ import Utils.DB.DBHandler;
 import Utils.socket.SignedReader;
 import Utils.socket.SignedWriter;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -11,7 +13,9 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -31,6 +35,7 @@ public class Hilo implements Runnable {
     public static final int NO_OPERATION = 0;
     public static final int REGISTRAR = 1;
     public static final int RECUPERAR = 2;
+    public static final int LISTAR = 3;
     public static final int READY = 255;
     private final SSLSocket socket;
     private SignedReader signedReader;
@@ -55,12 +60,22 @@ public class Hilo implements Runnable {
 
             int i = signedReader.read();
             System.out.println("Leyendo..." + i);
-            if (i == REGISTRAR) {
-                registrar_documento();
 
-            }
-            if (i == RECUPERAR) {
-                recuperar_documento();
+            switch (i) {
+                case REGISTRAR:
+                    System.out.println("***Registrar****");
+                    registrar_documento();
+                    break;
+                case RECUPERAR:
+                    System.out.println("***Recuperar****");
+                    recuperar_documento();
+                    break;
+                case LISTAR:
+                    System.out.println("****Listar****");
+                    listar_documentos();
+                    break;
+                default:
+                    break;
             }
 
         } catch (Exception ex) {
@@ -148,38 +163,73 @@ public class Hilo implements Runnable {
 
     private void recuperar_documento() throws Exception {
 
-        try {
-            signedWriter.write(READY);
-            System.out.println("Escribiendo... " + READY);
+        signedWriter.write(READY);
+        System.out.println("Escribiendo... " + READY);
+        signedWriter.flush();
+
+        Object[] recibido = signedReader.ReadRecoveryRequest();
+        String id_registro = (String) recibido[0];
+        System.out.println("El numero de registro del documento solicitado es " + id_registro);
+
+        byte[] certificado = (byte[]) recibido[1];
+
+        if (!SSL_server.verifyCert(certificado)) { //Validacion de certificado de documento.
+            signedWriter.writeString(SSL_server.FAIL_SIGN);
             signedWriter.flush();
-
-            Object[] recibido = signedReader.ReadRecoveryRequest();
-            String id_registro = (String) recibido[0];
-            System.out.println("El numero de registro del documento solicitado es " + id_registro);
-
-            byte[] certificado = (byte[]) recibido[1];
-
-            if (!SSL_server.verifyCert(certificado)) { //Validacion de certificado de documento.
-                signedWriter.writeString(SSL_server.FAIL_SIGN);
-                signedWriter.flush();
-                return;
-            } else {
-                System.out.print("\nescribe");
-                signedWriter.writeString(SSL_server.OK);
-            }
-            signedWriter.flush();
-
-            ByteArrayInputStream inStream = new ByteArrayInputStream(certificado);
-            CertificateFactory cf = CertificateFactory.getInstance("X.509");
-            X509Certificate cert = (X509Certificate) cf.generateCertificate(inStream);
-
-            String idCliente = cert.getIssuerDN().toString();
-            System.out.println("\n" + idCliente);
-
-        } catch (IOException ex) {
-            Logger.getLogger(Hilo.class.getName()).log(Level.SEVERE, null, ex);
+            return;
+        } else {
+            System.out.print("\nescribe");
+            signedWriter.writeString(SSL_server.OK);
         }
+        signedWriter.flush();
 
+        ByteArrayInputStream inStream = new ByteArrayInputStream(certificado);
+        CertificateFactory cf = CertificateFactory.getInstance("X.509");
+        X509Certificate cert = (X509Certificate) cf.generateCertificate(inStream);
+
+        String idCliente = cert.getIssuerDN().toString();
+        System.out.println("\n" + idCliente);
+
+    }
+
+    public void listar_documentos() throws Exception {
+
+        signedWriter.write(READY);
+        System.out.println("Escribiendo... " + READY);
+        signedWriter.flush();
+
+        byte[] certificado = signedReader.ReadListDocumentRequest();
+
+        /*validamos el certificado */
+        if (!SSL_server.verifyCert(certificado)) {
+            signedWriter.writeString(SSL_server.FAIL_CERT);
+            signedWriter.flush();
+            return;
+        } else {
+            System.out.println("\nescribe");
+            signedWriter.writeString(SSL_server.OK);
+        }
+        
+        /*Obtenemos el certificado X509*/
+        ByteArrayInputStream inStream = new ByteArrayInputStream(certificado);
+        CertificateFactory cf = CertificateFactory.getInstance("X.509");
+        X509Certificate cert = (X509Certificate) cf.generateCertificate(inStream);
+             
+        System.out.println(cert.getIssuerDN().getName());
+        HashMap<String, ArrayList<DBData>> listas = SSL_server.HANDLER.getListado(cert.getIssuerDN().getName().split(",")[0].replace("CN=", ""));
+        
+        ArrayList<DBData> listaConfidenciales = listas.get("confidenciales");
+        ArrayList<DBData> listaNoConfidenciales = listas.get("noconfidenciales");
+        
+        System.out.println(listaConfidenciales);
+        System.out.println(listaNoConfidenciales);
+        
+        signedWriter.sendDocumentListRequest(listaConfidenciales);
+        signedWriter.sendDocumentListRequest(listaNoConfidenciales);
+        
+        System.out.println("enviados los arraylist");
+        
+        /*si es correcto generamos la respuesta*/
     }
 
     /**

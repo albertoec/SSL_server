@@ -11,7 +11,12 @@ package Utils.DB;
  */
 public class DBData {
 
+    
+
     private String ruta, nombre, usuario, sello;
+    private boolean confidencialidad;
+    private byte[] firma_cliente, firma_servidor;
+    private long id;
 
     public String getRuta() {
         return ruta;
@@ -68,6 +73,13 @@ public class DBData {
     public void setFirma_servidor(byte[] firma_servidor) {
         this.firma_servidor = firma_servidor;
     }
-    private boolean confidencialidad;
-    private byte[] firma_cliente, firma_servidor;
+    
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
 }

@@ -70,8 +70,8 @@ public class SSL_server {
 
 	public static final String ENTRY_AES = "aes_secret_key";
 	public static final String ENTRY_DES = "des_secret_key";
-	public static final String ENTRY_FIRMA = "firma_server";
-	public static final String ENTRY_CLAVE = "clave_server";
+	public static final String ENTRY_FIRMA = "servidor-firma-rsa";
+	public static final String ENTRY_CLAVE = "servidor-auth-rsa";
 	public static final String FAIL_CERT = "CERTIFICADO INCORRECTO";
 	public static final String FAIL_SIGN = "FIRMA INCORRECTA";
 	public static final String OK = "OK";
@@ -205,7 +205,7 @@ public class SSL_server {
 		FileInputStream fmensaje = new FileInputStream(docPath);
 
 		String provider = "SunJCE";
-		String algoritmo = "SHA1withRSA";
+		String algoritmo = "SHA256withRSA";
 		byte bloque[] = new byte[1024];
 		long filesize = 0;
 		int longbloque;

@@ -144,6 +144,8 @@ public class DBHandler {
             ResultSet res = st.executeQuery("SELECT * FROM datos WHERE id_registro=" + id_registro);
             DBData datos = new DBData();
             if (res.next()) {
+                //cargamos el idRegistro
+                datos.setId(id_registro);
                 //cargamos la firma del servidor
             	datos.setFirma_servidor(DatatypeConverter.parseBase64Binary(res.getString("firma_server")));
                 //cargamos la firma del cliente

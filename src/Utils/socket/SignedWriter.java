@@ -5,6 +5,7 @@
  */
 package Utils.socket;
 
+import Utils.DB.DBData;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -12,6 +13,7 @@ import java.io.InputStream;
 import java.net.Socket;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
@@ -76,28 +78,72 @@ public class SignedWriter extends SocketWriter {
             return false;
         }
     }
-    
-        public boolean sendRecoveryRequest(String id_registro, X509Certificate certificado){
-        
+
+    public boolean sendRecoveryRequest(String id_registro, X509Certificate certificado) {
+
         try {
-            
+
             //Primero enviamos el identificador del documento que queremos recuperar
             writeString(id_registro);
             flush();
-            
+
             //Después enviamos el certificado del cliente
             byte[] cert = certificado.getEncoded();
             writeLong(cert.length);
             write(cert);
             flush();
-            
+
             return true;
-            
+
         } catch (IOException ex) {
             return false;
         } catch (CertificateEncodingException ex) {
             return false;
         }
-        
+
+    }
+
+    public boolean sendDocumentListRequest(ArrayList<DBData> lista) {
+
+        try {
+
+            /*enviamos el tamaño del arraylist para que en caso de tamaño 0,
+            no tengamos que quedarnos escuchando en el lado del cliente*/
+            
+            write(lista.size());
+            flush();
+            
+            for (int i = 0; i < lista.size(); i++) {
+
+                /*idRegistro*/
+                writeLong(lista.get(i).getId());
+                flush();
+                /*idPropietario*/
+                writeString(lista.get(i).getUsuario());
+                flush();
+                /*nombreDoc*/
+                writeString(lista.get(i).getNombre());
+                flush();
+                /*selloTemporal*/
+                writeString(lista.get(i).getSello());
+                flush();
+
+                if (i == (lista.size() - 1)) {
+                    write(255);
+                    System.out.println("Es el último");
+                    flush();
+                } else {
+                    write(1);
+                    System.out.println("No es el último");
+                    flush();
+                }
+            }
+
+            return true;
+
+        } catch (IOException e) {
+
+        }
+        return false;
     }
 }
