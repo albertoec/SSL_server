@@ -225,9 +225,15 @@ public class Hilo implements Runnable {
                 X509Certificate cert = (X509Certificate) cf.generateCertificate(inStream);
 
                 String idCliente = cert.getIssuerDN().toString();
+                
+                System.out.println(idCliente);
+                System.out.println(datos.getUsuario());
+                
                 String[] fragmentos = idCliente.split(",");
                 
-                idCliente = fragmentos[1].trim().replace("OU=", "");
+                idCliente = fragmentos[0].trim().replace("CN=", "");
+                
+                System.out.println(idCliente);
                 
                 if(!idCliente.equals(datos.getUsuario())){ 
                     signedWriter.writeString("ACCESO NO PERMITIDO");
@@ -245,7 +251,7 @@ public class Hilo implements Runnable {
                 String sello = datos.getSello();
                 byte[] firma_registrador = datos.getFirma_servidor();
                 byte[] firma_cliente = datos.getFirma_cliente();
-                X509Certificate cert_firma_servidor = SSL_server.getCertificate(SSL_server.getKeyStore(), SSL_server.getKeyStorePass(), "firma_server");
+                X509Certificate cert_firma_servidor = SSL_server.getCertificate(SSL_server.getKeyStore(), SSL_server.getKeyStorePass(), "servidor".concat("-firma-rsa"));
                 
                 
                 //Enviamos la respuesta
