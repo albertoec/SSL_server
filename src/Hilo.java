@@ -1,16 +1,10 @@
 
 import Utils.DB.DBData;
-import Utils.DB.DBHandler;
 import Utils.socket.SignedReader;
 import Utils.socket.SignedWriter;
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -194,7 +188,7 @@ public class Hilo implements Runnable {
                 String ruta = datos.getRuta();
                 byte[] firma_registrador = datos.getFirma_servidor();
                 byte[] firma_cliente = datos.getFirma_cliente();
-                X509Certificate cert_firma_servidor = SSL_server.getCertificate(SSL_server.getKeyStore(), SSL_server.getKeyStorePass(), "servidor-firma-rsa");
+                X509Certificate cert_firma_servidor = SSL_server.getCertificate(SSL_server.getKeyStore(), SSL_server.getKeyStorePass(), SSL_server.ENTRY_FIRMA);
 
                 //Enviamos la respuesta
                 boolean respuesta = signedWriter.sendRecoveryResponse(id_registro, ruta, sello, firma_registrador, cert_firma_servidor);
@@ -205,7 +199,7 @@ public class Hilo implements Runnable {
                     System.out.println("Error al enviar la respuesta");
                 }
             } else { //El documento es privado
-                
+
                 signedWriter.writeString("PRIVADO");
                 signedWriter.flush();
 
@@ -225,35 +219,34 @@ public class Hilo implements Runnable {
                 X509Certificate cert = (X509Certificate) cf.generateCertificate(inStream);
 
                 String idCliente = cert.getIssuerDN().toString();
-                
+
                 System.out.println(idCliente);
                 System.out.println(datos.getUsuario());
-                
+
                 String[] fragmentos = idCliente.split(",");
-                
+
                 idCliente = fragmentos[0].trim().replace("CN=", "");
-                
+
                 System.out.println(idCliente);
-                
-                if(!idCliente.equals(datos.getUsuario())){ 
+
+                if (!idCliente.equals(datos.getUsuario())) {
                     signedWriter.writeString("ACCESO NO PERMITIDO");
                     signedWriter.flush();
                     return;
-                }else{
+                } else {
                     signedWriter.writeString("USUARIO CORRECTO");
                     signedWriter.flush();
                 }
-                
+
                 String temporal = getRutaTemporal();
-                
+
                 SSL_server.Cifrador.decrypt(datos.getRuta(), temporal);
-                
+
                 String sello = datos.getSello();
                 byte[] firma_registrador = datos.getFirma_servidor();
                 byte[] firma_cliente = datos.getFirma_cliente();
                 X509Certificate cert_firma_servidor = SSL_server.getCertificate(SSL_server.getKeyStore(), SSL_server.getKeyStorePass(), "servidor".concat("-firma-rsa"));
-                
-                
+
                 //Enviamos la respuesta
                 boolean flag = signedWriter.sendRecoveryResponse(id_registro, temporal, sello, firma_registrador, cert_firma_servidor);
 
@@ -287,26 +280,26 @@ public class Hilo implements Runnable {
             System.out.println("\nescribe");
             signedWriter.writeString(SSL_server.OK);
         }
-        
+
         /*Obtenemos el certificado X509*/
         ByteArrayInputStream inStream = new ByteArrayInputStream(certificado);
         CertificateFactory cf = CertificateFactory.getInstance("X.509");
         X509Certificate cert = (X509Certificate) cf.generateCertificate(inStream);
-             
+
         System.out.println(cert.getIssuerDN().getName());
         HashMap<String, ArrayList<DBData>> listas = SSL_server.HANDLER.getListado(cert.getIssuerDN().getName().split(",")[0].replace("CN=", ""));
-        
+
         ArrayList<DBData> listaConfidenciales = listas.get("confidenciales");
         ArrayList<DBData> listaNoConfidenciales = listas.get("noconfidenciales");
-        
+
         System.out.println(listaConfidenciales);
         System.out.println(listaNoConfidenciales);
-        
+
         signedWriter.sendDocumentListRequest(listaConfidenciales);
         signedWriter.sendDocumentListRequest(listaNoConfidenciales);
-        
+
         System.out.println("enviados los arraylist");
-        
+
         /*si es correcto generamos la respuesta*/
     }
 
