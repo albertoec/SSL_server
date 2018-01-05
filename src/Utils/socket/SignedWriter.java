@@ -103,6 +103,24 @@ public class SignedWriter extends SocketWriter {
 
     }
 
+    public boolean sendRegisterResponse(Long id_registro, String selloTemporal, byte[] sigRD, X509Certificate cert_firma_server) {
+        try {
+            writeLong(0L);
+            writeLong(id_registro);
+            writeString(selloTemporal);
+            writeLong(sigRD.length);
+            write(sigRD);
+            byte[] temp = cert_firma_server.getEncoded();
+            writeLong(temp.length);
+            write(temp);
+            flush();
+            return true;
+        } catch (IOException | CertificateEncodingException ex) {
+
+        }
+        return false;
+    }
+
     public boolean sendRecoveryResponse(String id_registro, String ruta, String sello, byte[] firma_registrador, X509Certificate cert_firma_server, String docName) {
 
         try {
