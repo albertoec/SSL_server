@@ -50,7 +50,7 @@ public class cifrador {
 		cipher = Cipher.getInstance("AES/CBC/PKCS5Padding", "SunJCE");
 		KeyStore ks;
 		ks = KeyStore.getInstance("JCEKS");
-		ks.load(new FileInputStream(keyStore + ".jce"), contraseñaKeyStore);
+		ks.load(new FileInputStream(keyStore), contraseñaKeyStore);
 		KeyStore.SecretKeyEntry pkEntry = (KeyStore.SecretKeyEntry) ks.getEntry("clavecifrado_server",
 				new KeyStore.PasswordProtection(contraseñaKeyStore));
 		System.out.println(pkEntry);
