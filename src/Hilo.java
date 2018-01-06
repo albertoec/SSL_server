@@ -47,31 +47,33 @@ public class Hilo implements Runnable {
         try {
 
             socket.getRemoteSocketAddress(); // intrucción para forzar el inicio del handshake
+            
+
             socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
 
             signedReader = new SignedReader(socket);
             signedWriter = new SignedWriter(socket);
+            do {
+                int i = signedReader.read();
+                System.out.println("Leyendo..." + i);
 
-            int i = signedReader.read();
-            System.out.println("Leyendo..." + i);
-
-            switch (i) {
-                case REGISTRAR:
-                    System.out.println("***Registrar****");
-                    registrar_documento();
-                    break;
-                case RECUPERAR:
-                    System.out.println("***Recuperar****");
-                    recuperar_documento();
-                    break;
-                case LISTAR:
-                    System.out.println("****Listar****");
-                    listar_documentos();
-                    break;
-                default:
-                    break;
-            }
-
+                switch (i) {
+                    case REGISTRAR:
+                        System.out.println("***Registrar****");
+                        registrar_documento();
+                        break;
+                    case RECUPERAR:
+                        System.out.println("***Recuperar****");
+                        recuperar_documento();
+                        break;
+                    case LISTAR:
+                        System.out.println("****Listar****");
+                        listar_documentos();
+                        break;
+                    default:
+                        return;
+                }
+            } while (true);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
