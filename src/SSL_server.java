@@ -124,12 +124,12 @@ public class SSL_server {
         // System.setProperty("javax.net.debug", "all");
         // ---- Almacenes mios -----------------------------
         // Almacen de claves
-        System.setProperty("javax.net.ssl.keyStore", keyStore + ".jce");
+        System.setProperty("javax.net.ssl.keyStore", keyStore );
         System.setProperty("javax.net.ssl.keyStoreType", "JCEKS");
         System.setProperty("javax.net.ssl.keyStorePassword", keyStorePass);
 
         // Almacen de confianza
-        System.setProperty("javax.net.ssl.trustStore", trustStore + ".jce");
+        System.setProperty("javax.net.ssl.trustStore", trustStore);
         System.setProperty("javax.net.ssl.trustStoreType", "JCEKS");
         System.setProperty("javax.net.ssl.trustStorePassword", trustStorePass);
 
@@ -164,8 +164,8 @@ public class SSL_server {
                 ks = KeyStore.getInstance("JCEKS");
                 ts = KeyStore.getInstance("JCEKS");
 
-                ks.load(new FileInputStream(RAIZ + keyStore + ".jce"), contraseñaKeyStore);
-                ts.load(new FileInputStream(RAIZ + trustStore + ".jce"), contraseñaTrustStore);
+                ks.load(new FileInputStream(RAIZ + keyStore ), contraseñaKeyStore);
+                ts.load(new FileInputStream(RAIZ + trustStore ), contraseñaTrustStore);
 
                 kmf.init(ks, contraseñaKeyStore);
                 tmf.init(ts);
@@ -214,7 +214,7 @@ public class SSL_server {
         // Obtener la clave privada del keystore
         ks = KeyStore.getInstance("JCEKS");
 
-        ks.load(new FileInputStream(keyStore + ".jce"), ks_password);
+        ks.load(new FileInputStream(keyStore ), ks_password);
 
         KeyStore.PrivateKeyEntry pkEntry = (KeyStore.PrivateKeyEntry) ks.getEntry(entry_alias,
                 new KeyStore.PasswordProtection(key_password));
@@ -278,7 +278,7 @@ public class SSL_server {
             char[] ks_password = keyStorePass.toCharArray();
 
             ks = KeyStore.getInstance("JCEKS");
-            ks.load(new FileInputStream(keyStore + ".jce"), ks_password);
+            ks.load(new FileInputStream(keyStore ), ks_password);
             byte[] certificadoRaw = ks.getCertificate(entry_alias).getEncoded();
             ByteArrayInputStream inStream;
             inStream = new ByteArrayInputStream(certificadoRaw);
@@ -312,7 +312,7 @@ public class SSL_server {
         char[] ks_password = trustStorePass.toCharArray();
 
         ks = KeyStore.getInstance("JCEKS");
-        ks.load(new FileInputStream(trustStore + ".jce"), ks_password);
+        ks.load(new FileInputStream(trustStore ), ks_password);
 
         Enumeration<String> aliases = ks.aliases();
         System.out.println((String) aliases.nextElement());
@@ -380,7 +380,7 @@ public class SSL_server {
 
         ks_password = trustStorePass.toCharArray();
         ks = KeyStore.getInstance("JCEKS");
-        ks.load(new FileInputStream(trustStore + ".jce"), ks_password);
+        ks.load(new FileInputStream(trustStore ), ks_password);
 
         // Obtener el certificado de un array de bytes
         // Obtener la clave publica del keystore
@@ -455,7 +455,19 @@ public class SSL_server {
     /**
      * Al metodo le pasas el archivo en String a descifrar.
      *
+     * @param file
      * @return byte[] del archivo descifrado.
+     * @throws java.security.NoSuchAlgorithmException
+     * @throws java.security.NoSuchProviderException
+     * @throws javax.crypto.NoSuchPaddingException
+     * @throws java.security.KeyStoreException
+     * @throws java.security.cert.CertificateException
+     * @throws java.io.FileNotFoundException
+     * @throws java.security.UnrecoverableEntryException
+     * @throws java.security.InvalidKeyException
+     * @throws java.security.InvalidAlgorithmParameterException
+     * @throws javax.crypto.IllegalBlockSizeException
+     * @throws javax.crypto.BadPaddingException
      */
     public static byte[] decryptByte(String file)
             throws NoSuchAlgorithmException, NoSuchProviderException, NoSuchPaddingException, KeyStoreException,
@@ -473,7 +485,7 @@ public class SSL_server {
     public static X509Certificate getCertificate(String keyStore, String keyStorePwd, String aliasCertificate) throws FileNotFoundException, KeyStoreException, IOException, NoSuchAlgorithmException, UnrecoverableKeyException, CertificateException {
 
         KeyStore keystore = KeyStore.getInstance("JCEKS");
-        keystore.load(new FileInputStream(keyStore + ".jce"), keyStorePwd.toCharArray());
+        keystore.load(new FileInputStream(keyStore ), keyStorePwd.toCharArray());
         X509Certificate cert;
 
         cert = (X509Certificate) keystore.getCertificate(aliasCertificate);

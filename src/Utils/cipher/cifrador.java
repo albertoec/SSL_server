@@ -50,7 +50,7 @@ public class cifrador {
 		cipher = Cipher.getInstance("AES/CBC/PKCS5Padding", "SunJCE");
 		KeyStore ks;
 		ks = KeyStore.getInstance("JCEKS");
-		ks.load(new FileInputStream(keyStore + ".jce"), contraseñaKeyStore);
+		ks.load(new FileInputStream(keyStore ), contraseñaKeyStore);
 		KeyStore.SecretKeyEntry pkEntry = (KeyStore.SecretKeyEntry) ks.getEntry("clavecifrado_server",
 				new KeyStore.PasswordProtection(contraseñaKeyStore));
 		System.out.println(pkEntry);
@@ -100,7 +100,19 @@ public class cifrador {
 	/**
 	 * Al metodo le pasas la ruta del archivo a descifrar.
 	 * 
-	 * @return String del archivo descifrado.
+     * @param docPath
+     * @param docDestino
+     * @throws java.security.NoSuchAlgorithmException
+     * @throws java.security.NoSuchProviderException
+     * @throws javax.crypto.NoSuchPaddingException
+     * @throws java.security.KeyStoreException
+     * @throws java.security.cert.CertificateException
+     * @throws java.io.FileNotFoundException
+     * @throws java.security.UnrecoverableEntryException
+     * @throws java.security.InvalidKeyException
+     * @throws java.security.InvalidAlgorithmParameterException
+     * @throws javax.crypto.IllegalBlockSizeException
+     * @throws javax.crypto.BadPaddingException
 	 */
 	public void decrypt(String docPath, String docDestino)
 			throws NoSuchAlgorithmException, NoSuchProviderException, NoSuchPaddingException, KeyStoreException,
