@@ -107,7 +107,7 @@ public class SSL_server {
             System.out.println("Indroduzca la contraseña de la base de datos:");
             System.out.print(">");
             String pass = br.readLine();
-            HANDLER = new DBHandler(user,pass);
+            HANDLER = new DBHandler(user, pass);
 
             System.out.println("Handler creado con éxito.");
 
@@ -258,10 +258,7 @@ public class SSL_server {
         signer.update(firmaCliente);
         firma = signer.sign();
 
-        
-
         System.out.println("*** FIRMA TERMINADA ****");
-      
 
         fmensaje.close();
 
@@ -296,7 +293,7 @@ public class SSL_server {
         return null;
     }
 
-    public static boolean verify(String docPath, byte[] firma) throws FileNotFoundException, CertificateException,
+    public static boolean verify(String docPath, byte[] firma, byte[] certificado) throws FileNotFoundException, CertificateException,
             InvalidKeyException, SignatureException, NoSuchAlgorithmException, IOException, KeyStoreException {
 
         /**
@@ -312,65 +309,41 @@ public class SSL_server {
         long filesize = 0;
         int longbloque;
 
-        KeyStore ks;
-        char[] ks_password = trustStorePass.toCharArray();
+        FileInputStream fmensajeV = new FileInputStream(docPath);
 
-        ks = KeyStore.getInstance("JCEKS");
-        ks.load(new FileInputStream(trustStore), ks_password);
+        byte[] certificadoRaw = certificado;
+        ByteArrayInputStream inStream;
+        inStream = new ByteArrayInputStream(certificadoRaw);
 
-        Enumeration<String> aliases = ks.aliases();
-        System.out.println((String) aliases.nextElement());
+        CertificateFactory cf = CertificateFactory.getInstance("X.509");
 
-        while (aliases.hasMoreElements()) {
+        X509Certificate cert = (X509Certificate) cf.generateCertificate(inStream);
+        PublicKey publicKey = cert.getPublicKey();
+        // Creamos un objeto para verificar, pasandole el algoritmo leido
+        // del certificado.
+        Signature verifier = Signature.getInstance("SHA256withRSA");
+        System.out.println(cert.getSigAlgName());
+        // Inicializamos el objeto para verificar
+        verifier.initVerify(publicKey);
 
-            FileInputStream fmensajeV = new FileInputStream(docPath);
+        while ((longbloque = fmensajeV.read(bloque)) > 0) {
+            filesize = filesize + longbloque;
+            verifier.update(bloque, 0, longbloque);
+        }
 
-            String alias = aliases.nextElement();
+        boolean resultado;
+        resultado = verifier.verify(firma);
 
-            // Obtener la clave publica del keystore
-            PublicKey publicKey = ks.getCertificate(alias).getPublicKey();
+        System.out.println();
+        if (resultado == true) {
+            System.out.print("Verificacion correcta de la Firma");
 
-            System.out.println("*** CLAVE PUBLICA ***");
-            System.out.println(publicKey);
-
-            // Obtener el usuario del Certificado tomado del KeyStore.
-            // Hay que traducir el formato de certificado del formato del
-            // keyStore
-            // al formato X.509. Para eso se usa un CertificateFactory.
-            byte[] certificadoRaw = ks.getCertificate(alias).getEncoded();
-            ByteArrayInputStream inStream;
-            inStream = new ByteArrayInputStream(certificadoRaw);
-
-            CertificateFactory cf = CertificateFactory.getInstance("X.509");
-            X509Certificate cert = (X509Certificate) cf.generateCertificate(inStream);
-
-            // Creamos un objeto para verificar, pasandole el algoritmo leido
-            // del certificado.
-            Signature verifier = Signature.getInstance(cert.getSigAlgName());
-            System.out.println(cert.getSigAlgName());
-            // Inicializamos el objeto para verificar
-            verifier.initVerify(publicKey);
-
-            while ((longbloque = fmensajeV.read(bloque)) > 0) {
-                filesize = filesize + longbloque;
-                verifier.update(bloque, 0, longbloque);
-            }
-
-            boolean resultado;
-            System.out.println((String) aliases.nextElement());
-            resultado = verifier.verify(firma);
-
-            System.out.println();
-            if (resultado == true) {
-                System.out.print("Verificacion correcta de la Firma");
-
-                return true;
-
-            }
-
-            fmensajeV.close();
+            return true;
 
         }
+
+        fmensajeV.close();
+
         System.out.print("Fallo de verificacion de firma");
         return false;
     }

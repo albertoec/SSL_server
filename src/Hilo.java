@@ -101,7 +101,7 @@ public class Hilo implements Runnable {
                 signedWriter.flush();
                 return;
             }
-            if (!SSL_server.verify(ruta_temp, firma_cliente)) { // Validacion de
+            if (!SSL_server.verify(ruta_temp, firma_cliente,certificado)) { // Validacion de
                 // firma de
                 // documento.
                 signedWriter.writeString(SSL_server.FAIL_CERT);
