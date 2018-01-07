@@ -41,6 +41,8 @@ import javax.xml.bind.DatatypeConverter;
 import Utils.DB.DBData;
 import Utils.DB.DBHandler;
 import Utils.cipher.cifrador;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.security.UnrecoverableKeyException;
 
 /*
@@ -98,15 +100,21 @@ public class SSL_server {
             System.out.println("Cifrador inicializado.");
             // creando handler de la base de datos
             System.out.println("Creando handler de la base de datos.");
-            HANDLER = new DBHandler();
-            DBData datitos = HANDLER.getData(2L);
+            System.out.println("Indroduzca el nombre de usuario de la base de datos:");
+            System.out.print(">");
+            BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+            String user = br.readLine();
+            System.out.println("Indroduzca la contraseña de la base de datos:");
+            System.out.print(">");
+            String pass = br.readLine();
+            HANDLER = new DBHandler(user,pass);
 
             System.out.println("Handler creado con éxito.");
 
             System.out.println("*************************");
             System.out.println("* Servidor inicializado *");
             System.out.println("*************************");
-
+            new Killer(br).start();
             while (true) {
 
                 Runnable thread = new Hilo((SSLSocket) socket.accept());
@@ -124,7 +132,7 @@ public class SSL_server {
         // System.setProperty("javax.net.debug", "all");
         // ---- Almacenes mios -----------------------------
         // Almacen de claves
-        System.setProperty("javax.net.ssl.keyStore", keyStore );
+        System.setProperty("javax.net.ssl.keyStore", keyStore);
         System.setProperty("javax.net.ssl.keyStoreType", "JCEKS");
         System.setProperty("javax.net.ssl.keyStorePassword", keyStorePass);
 
@@ -164,8 +172,8 @@ public class SSL_server {
                 ks = KeyStore.getInstance("JCEKS");
                 ts = KeyStore.getInstance("JCEKS");
 
-                ks.load(new FileInputStream(RAIZ + keyStore ), contraseñaKeyStore);
-                ts.load(new FileInputStream(RAIZ + trustStore ), contraseñaTrustStore);
+                ks.load(new FileInputStream(RAIZ + keyStore), contraseñaKeyStore);
+                ts.load(new FileInputStream(RAIZ + trustStore), contraseñaTrustStore);
 
                 kmf.init(ks, contraseñaKeyStore);
                 tmf.init(ts);
@@ -214,7 +222,7 @@ public class SSL_server {
         // Obtener la clave privada del keystore
         ks = KeyStore.getInstance("JCEKS");
 
-        ks.load(new FileInputStream(keyStore ), ks_password);
+        ks.load(new FileInputStream(keyStore), ks_password);
 
         KeyStore.PrivateKeyEntry pkEntry = (KeyStore.PrivateKeyEntry) ks.getEntry(entry_alias,
                 new KeyStore.PasswordProtection(key_password));
@@ -250,14 +258,10 @@ public class SSL_server {
         signer.update(firmaCliente);
         firma = signer.sign();
 
-        double v = firma.length;
+        
 
-        System.out.println("*** FIRMA: ****");
-        for (int i = 0; i < firma.length; i++) {
-            System.out.print(firma[i] + " ");
-        }
-        System.out.println();
-        System.out.println();
+        System.out.println("*** FIRMA TERMINADA ****");
+      
 
         fmensaje.close();
 
@@ -278,7 +282,7 @@ public class SSL_server {
             char[] ks_password = keyStorePass.toCharArray();
 
             ks = KeyStore.getInstance("JCEKS");
-            ks.load(new FileInputStream(keyStore ), ks_password);
+            ks.load(new FileInputStream(keyStore), ks_password);
             byte[] certificadoRaw = ks.getCertificate(entry_alias).getEncoded();
             ByteArrayInputStream inStream;
             inStream = new ByteArrayInputStream(certificadoRaw);
@@ -312,7 +316,7 @@ public class SSL_server {
         char[] ks_password = trustStorePass.toCharArray();
 
         ks = KeyStore.getInstance("JCEKS");
-        ks.load(new FileInputStream(trustStore ), ks_password);
+        ks.load(new FileInputStream(trustStore), ks_password);
 
         Enumeration<String> aliases = ks.aliases();
         System.out.println((String) aliases.nextElement());
@@ -380,7 +384,7 @@ public class SSL_server {
 
         ks_password = trustStorePass.toCharArray();
         ks = KeyStore.getInstance("JCEKS");
-        ks.load(new FileInputStream(trustStore ), ks_password);
+        ks.load(new FileInputStream(trustStore), ks_password);
 
         // Obtener el certificado de un array de bytes
         // Obtener la clave publica del keystore
@@ -485,7 +489,7 @@ public class SSL_server {
     public static X509Certificate getCertificate(String keyStore, String keyStorePwd, String aliasCertificate) throws FileNotFoundException, KeyStoreException, IOException, NoSuchAlgorithmException, UnrecoverableKeyException, CertificateException {
 
         KeyStore keystore = KeyStore.getInstance("JCEKS");
-        keystore.load(new FileInputStream(keyStore ), keyStorePwd.toCharArray());
+        keystore.load(new FileInputStream(keyStore), keyStorePwd.toCharArray());
         X509Certificate cert;
 
         cert = (X509Certificate) keystore.getCertificate(aliasCertificate);

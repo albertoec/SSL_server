@@ -109,8 +109,8 @@ public class Hilo implements Runnable {
                 return;
             }
             signedWriter.flush();
-            // NUMERO DE REGISTRO (idRegistro). FALTA descomentar
-            long id_registro = 0L;
+            // NUMERO DE REGISTRO (idRegistro). 
+            long id_registro;
             id_registro = SSL_server.HANDLER.getNextID();
             // Sello temporal
             Date selloTemporal = new Date();

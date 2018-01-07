@@ -5,10 +5,6 @@
  */
 package Utils.DB;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.sql.Blob;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -28,16 +24,21 @@ import javax.xml.bind.DatatypeConverter;
  */
 public class DBHandler {
 
-    private static final String NOMBRE_DB = "seguridad", IP = "127.0.0.1", USER = "seguridad", PASSWD = "", PORT = "", TIMEOUT = "15000";
+    private static final String NOMBRE_DB = "seguridad", IP = "127.0.0.1", PORT = "", TIMEOUT = "15000";
+    private final String USER , PASSWD ;
     private Connection conn;
 
     /**
      * Crea el handler de la base de datos.
      *
+     * @param user
+     * @param pass
      * @throws DBException generada al no poder conectarse con la base de datos
      */
-    public DBHandler() throws DBException {
+    public DBHandler(String user, String pass) throws DBException {
         try {
+            this.USER = user;
+            this.PASSWD = pass;
             crearBaseDatos();
         } catch (SQLException | ClassNotFoundException | InstantiationException | IllegalAccessException ex) {
             ex.printStackTrace();
@@ -147,7 +148,7 @@ public class DBHandler {
                 //cargamos el idRegistro
                 datos.setId(id_registro);
                 //cargamos la firma del servidor
-            	datos.setFirma_servidor(DatatypeConverter.parseBase64Binary(res.getString("firma_server")));
+                datos.setFirma_servidor(DatatypeConverter.parseBase64Binary(res.getString("firma_server")));
                 //cargamos la firma del cliente
                 datos.setFirma_cliente(DatatypeConverter.parseBase64Binary(res.getString("firma_cliente")));
                 //nombre del doc
@@ -163,8 +164,8 @@ public class DBHandler {
                 return datos;
             }
 
-        } catch (SQLException  ex) {
-        	ex.printStackTrace();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
             return null;
         }
         return null;
